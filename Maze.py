@@ -1,5 +1,6 @@
 import numpy as np
 from collections import deque
+import queue
 
 class Maze(object):
     def __init__(self, p, d):
@@ -61,11 +62,183 @@ class Maze(object):
                 nodes.append((cur_x, cur_y - 1))
         return False
 
+    def bd_bfs_solution(self):
+        nodes_s = deque([(0, 0)])
+        nodes_g = deque([(self.dim - 1, self.dim - 1)])
+        path_s = {}
+        path_g = {}
+        visited_s = [(0, 0)]
+        visited_g = [(self.dim - 1, self.dim - 1)]
+        finish = False
+        path_s[(0, 0)] = (0, 0)
+        path_g[(self.dim - 1, self.dim - 1)] = (self.dim - 1, self.dim - 1)
+        while nodes_s and nodes_g:
+            (cur_x_s, cur_y_s) = nodes_s.popleft()
+            (cur_x_g, cur_y_g) = nodes_g.popleft()
+
+            if cur_x_s + 1 < self.dim and self.env[cur_x_s + 1][cur_y_s] == 0 and (cur_x_s + 1, cur_y_s) not in path_s:
+                path_s[(cur_x_s + 1, cur_y_s)] = (cur_x_s, cur_y_s)
+                nodes_s.append((cur_x_s + 1, cur_y_s))
+                visited_s.append((cur_x_s + 1, cur_y_s))
+            if cur_x_s - 1 >= 0 and self.env[cur_x_s - 1][cur_y_s] == 0 and (cur_x_s - 1, cur_y_s) not in path_s:
+                path_s[(cur_x_s - 1, cur_y_s)] = (cur_x_s, cur_y_s)
+                nodes_s.append((cur_x_s - 1, cur_y_s))
+                visited_s.append((cur_x_s - 1, cur_y_s))
+            if cur_y_s + 1 < self.dim and self.env[cur_x_s][cur_y_s + 1] == 0 and (cur_x_s, cur_y_s + 1) not in path_s:
+                path_s[(cur_x_s, cur_y_s + 1)] = (cur_x_s, cur_y_s)
+                nodes_s.append((cur_x_s, cur_y_s + 1))
+                visited_s.append((cur_x_s, cur_y_s + 1))
+            if cur_y_s - 1 >= 0 and self.env[cur_x_s][cur_y_s - 1] == 0 and (cur_x_s, cur_y_s - 1) not in path_s:
+                path_s[(cur_x_s, cur_y_s - 1)] = (cur_x_s, cur_y_s)
+                nodes_s.append((cur_x_s, cur_y_s - 1))
+                visited_s.append((cur_x_s, cur_y_s - 1))
+                
+            if list(set(visited_s).intersection(set(visited_g))):
+                finish = True
+                break
+
+            if cur_x_g + 1 < self.dim and self.env[cur_x_g + 1][cur_y_g] == 0 and (cur_x_g + 1, cur_y_g) not in path_g:
+                path_g[(cur_x_g + 1, cur_y_g)] = (cur_x_g, cur_y_g)
+                nodes_g.append((cur_x_g + 1, cur_y_g))
+                visited_g.append((cur_x_g + 1, cur_y_g))
+            if cur_x_g - 1 >= 0 and self.env[cur_x_g - 1][cur_y_g] == 0 and (cur_x_g - 1, cur_y_g) not in path_g:
+                path_g[(cur_x_g - 1, cur_y_g)] = (cur_x_g, cur_y_g)
+                nodes_g.append((cur_x_g - 1, cur_y_g))
+                visited_g.append((cur_x_g - 1, cur_y_g))
+            if cur_y_g + 1 < self.dim and self.env[cur_x_g][cur_y_g + 1] == 0 and (cur_x_g, cur_y_g + 1) not in path_g:
+                path_g[(cur_x_g, cur_y_g + 1)] = (cur_x_g, cur_y_g)
+                nodes_g.append((cur_x_g, cur_y_g + 1))
+                visited_g.append((cur_x_g, cur_y_g + 1))
+            if cur_y_g - 1 >= 0 and self.env[cur_x_g][cur_y_g - 1] == 0 and (cur_x_g, cur_y_g - 1) not in path_g:
+                path_g[(cur_x_g, cur_y_g - 1)] = (cur_x_g, cur_y_g)
+                nodes_g.append((cur_x_g, cur_y_g - 1))
+                visited_g.append((cur_x_g, cur_y_g - 1))
+
+            if list(set(visited_s).intersection(set(visited_g))):
+                finish = True
+                break
+            
+        if finish:
+            path_list1 = list(set(visited_s).intersection(set(visited_g)))
+            while path_list1[-1] != (0, 0):
+                path_list1.append(path_s[path_list1[-1]])
+            path_list1.reverse()
+            path_list2 = list(set(visited_s).intersection(set(visited_g)))
+            while path_list2[-1] != (self.dim - 1, self.dim - 1):
+                path_list2.append(path_g[path_list2[-1]])
+
+            return path_list1 + path_list2
+        else:
+            return False
+
+    @staticmethod
+    def hf_manhattan(node1, node2):
+        (x1, y1) = node1
+        (x2, y2) = node2
+        return abs(x2 - x1) + abs(y2 - y1)
+
+    @staticmethod
+    def hf_euclidean(node1, node2):
+        (x1, y1) = node1
+        (x2, y2) = node2
+        return np.sqrt(np.square(x2 - x1) + np.square(y2 - y1))
+
+    def astarsearch_solution(self, heuristicFunction):
+        fringe = queue.PriorityQueue()
+        fringe.put((0, 0, (0,0)))
+        path = {}
+        goal = (self.dim - 1, self.dim - 1)
+        while not fringe.empty():
+            (total_estCost, alr_cost, (cur_x, cur_y)) = fringe.get()
+            if (cur_x, cur_y) == goal:
+                path_list = [(self.dim - 1, self.dim - 1)]
+                while path_list[-1] != (0, 0):
+                    path_list.append(path[path_list[-1]])
+                path_list.reverse()
+                return path_list
+            if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
+                if heuristicFunction == "Manhattan":
+                    est_cost = self.hf_manhattan((cur_x + 1, cur_y), (self.dim - 1, self.dim - 1))
+                elif heuristicFunction == "Euclidean":
+                    est_cost = self.hf_euclidean((cur_x + 1, cur_y), (self.dim - 1, self.dim - 1))
+                path[(cur_x + 1, cur_y)] = (cur_x, cur_y)
+                fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x + 1, cur_y)))
+            if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
+                if heuristicFunction == "Manhattan":
+                    est_cost = self.hf_manhattan((cur_x - 1, cur_y), (self.dim - 1, self.dim - 1))
+                elif heuristicFunction == "Euclidean":
+                    est_cost = self.hf_euclidean((cur_x - 1, cur_y), (self.dim - 1, self.dim - 1))
+                path[(cur_x - 1, cur_y)] = (cur_x, cur_y)
+                fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x - 1, cur_y)))
+            if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
+                if heuristicFunction == "Manhattan":
+                    est_cost = self.hf_manhattan((cur_x, cur_y + 1), (self.dim - 1, self.dim - 1))
+                elif heuristicFunction == "Euclidean":
+                    est_cost = self.hf_euclidean((cur_x, cur_y + 1), (self.dim - 1, self.dim - 1))
+                path[(cur_x, cur_y + 1)] = (cur_x, cur_y)
+                fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x, cur_y + 1)))
+            if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
+                if heuristicFunction == "Manhattan":
+                    est_cost = self.hf_manhattan((cur_x, cur_y - 1), (self.dim - 1, self.dim - 1))
+                elif heuristicFunction == "Euclidean":
+                    est_cost = self.hf_euclidean((cur_x, cur_y - 1), (self.dim - 1, self.dim - 1))
+                path[(cur_x, cur_y - 1)] = (cur_x, cur_y)
+                fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x, cur_y - 1)))
+        return False
+
+
+class TestMaze(object):
+
+    def __init__(self, p, d):
+        self.maze = Maze(p, d)
+        self.test_init()
+        # self.test_bfs()
+        # self.test_dfs()
+        self.test_astar()
+        self.test_bdBfs()
+
+    def test_init(self):
+        print(self.maze.env)
+
+    def test_dfs(self):
+        path = self.maze.dfs_solution()
+        if path == False:
+            print('pass')
+        else:
+            for t in path:
+                print(t)
+
+    def test_bfs(self):
+        path = self.maze.bfs_solution()
+        if path == False:
+            print('pass')
+        else:
+            for t in path:
+                print(t)
+
+    def test_bdBfs(self):
+        path = self.maze.bd_bfs_solution()
+        if path == False:
+            print('pass')
+        else:
+            for t in path:
+                print(t)
+
+    def test_astar(self):
+        path = self.maze.astarsearch_solution("Manhattan")
+        if path == False:
+            print('pass')
+        else:
+            for t in path:
+                print(t)
+        path = self.maze.astarsearch_solution("Euclidean")
+        if path == False:
+            print('pass')
+        else:
+            for t in path:
+                print(t)
+
+
 if __name__ == "__main__":
-    maze = Maze(0.1, 10)
-    print(maze.env)
-    if maze.dfs_solution() == False:
-        print('pass')
-    else:
-        for t in maze.dfs_solution():
-            print(t)
+    TestMaze(0.1, 10)
+
