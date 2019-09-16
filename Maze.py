@@ -138,3 +138,4 @@ if __name__ == "__main__":
     else:
         for t in maze.bd_bfs_solution():
             print(t)
+
