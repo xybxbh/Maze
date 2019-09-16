@@ -61,11 +61,80 @@ class Maze(object):
                 nodes.append((cur_x, cur_y - 1))
         return False
 
+    def bd_bfs_solution(self):
+        nodes_s = deque([(0, 0)])
+        nodes_g = deque([(self.dim - 1, self.dim - 1)])
+        path_s = {}
+        path_g = {}
+        visited_s = [(0, 0)]
+        visited_g = [(self.dim - 1, self.dim - 1)]
+        finish = False
+        path_s[(0, 0)] = (0, 0)
+        path_g[(self.dim - 1, self.dim - 1)] = (self.dim - 1, self.dim - 1)
+        while nodes_s and nodes_g:
+            (cur_x_s, cur_y_s) = nodes_s.popleft()
+            (cur_x_g, cur_y_g) = nodes_g.popleft()
+
+            if cur_x_s + 1 < self.dim and self.env[cur_x_s + 1][cur_y_s] == 0 and (cur_x_s + 1, cur_y_s) not in path_s:
+                path_s[(cur_x_s + 1, cur_y_s)] = (cur_x_s, cur_y_s)
+                nodes_s.append((cur_x_s + 1, cur_y_s))
+                visited_s.append((cur_x_s + 1, cur_y_s))
+            if cur_x_s - 1 >= 0 and self.env[cur_x_s - 1][cur_y_s] == 0 and (cur_x_s - 1, cur_y_s) not in path_s:
+                path_s[(cur_x_s - 1, cur_y_s)] = (cur_x_s, cur_y_s)
+                nodes_s.append((cur_x_s - 1, cur_y_s))
+                visited_s.append((cur_x_s - 1, cur_y_s))
+            if cur_y_s + 1 < self.dim and self.env[cur_x_s][cur_y_s + 1] == 0 and (cur_x_s, cur_y_s + 1) not in path_s:
+                path_s[(cur_x_s, cur_y_s + 1)] = (cur_x_s, cur_y_s)
+                nodes_s.append((cur_x_s, cur_y_s + 1))
+                visited_s.append((cur_x_s, cur_y_s + 1))
+            if cur_y_s - 1 >= 0 and self.env[cur_x_s][cur_y_s - 1] == 0 and (cur_x_s, cur_y_s - 1) not in path_s:
+                path_s[(cur_x_s, cur_y_s - 1)] = (cur_x_s, cur_y_s)
+                nodes_s.append((cur_x_s, cur_y_s - 1))
+                visited_s.append((cur_x_s, cur_y_s - 1))
+                
+            if list(set(visited_s).intersection(set(visited_g))):
+                finish = True
+                break
+
+            if cur_x_g + 1 < self.dim and self.env[cur_x_g + 1][cur_y_g] == 0 and (cur_x_g + 1, cur_y_g) not in path_g:
+                path_g[(cur_x_g + 1, cur_y_g)] = (cur_x_g, cur_y_g)
+                nodes_g.append((cur_x_g + 1, cur_y_g))
+                visited_g.append((cur_x_g + 1, cur_y_g))
+            if cur_x_g - 1 >= 0 and self.env[cur_x_g - 1][cur_y_g] == 0 and (cur_x_g - 1, cur_y_g) not in path_g:
+                path_g[(cur_x_g - 1, cur_y_g)] = (cur_x_g, cur_y_g)
+                nodes_g.append((cur_x_g - 1, cur_y_g))
+                visited_g.append((cur_x_g - 1, cur_y_g))
+            if cur_y_g + 1 < self.dim and self.env[cur_x_g][cur_y_g + 1] == 0 and (cur_x_g, cur_y_g + 1) not in path_g:
+                path_g[(cur_x_g, cur_y_g + 1)] = (cur_x_g, cur_y_g)
+                nodes_g.append((cur_x_g, cur_y_g + 1))
+                visited_g.append((cur_x_g, cur_y_g + 1))
+            if cur_y_g - 1 >= 0 and self.env[cur_x_g][cur_y_g - 1] == 0 and (cur_x_g, cur_y_g - 1) not in path_g:
+                path_g[(cur_x_g, cur_y_g - 1)] = (cur_x_g, cur_y_g)
+                nodes_g.append((cur_x_g, cur_y_g - 1))
+                visited_g.append((cur_x_g, cur_y_g - 1))
+
+            if list(set(visited_s).intersection(set(visited_g))):
+                finish = True
+                break
+            
+        if finish:
+            path_list1 = list(set(visited_s).intersection(set(visited_g)))
+            while path_list1[-1] != (0, 0):
+                path_list1.append(path_s[path_list1[-1]])
+            path_list1.reverse()
+            path_list2 = list(set(visited_s).intersection(set(visited_g)))
+            while path_list2[-1] != (self.dim - 1, self.dim - 1):
+                path_list2.append(path_g[path_list2[-1]])
+
+            return path_list1 + path_list2
+        else:
+            return False
+
 if __name__ == "__main__":
     maze = Maze(0.1, 10)
     print(maze.env)
-    if maze.dfs_solution() == False:
+    if maze.bd_bfs_solution() == False:
         print('pass')
     else:
-        for t in maze.dfs_solution():
+        for t in maze.bd_bfs_solution():
             print(t)
