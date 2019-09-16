@@ -26,7 +26,7 @@ class Maze(object):
                 path[(cur_x + 1, cur_y)] = (cur_x, cur_y)
                 nodes.append((cur_x + 1, cur_y))
             if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-                path[(cur_x - 1, cur_y - 1)] = (cur_x, cur_y)
+                path[(cur_x - 1, cur_y)] = (cur_x, cur_y)
                 nodes.append((cur_x - 1, cur_y))
             if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
                 path[(cur_x, cur_y + 1)] = (cur_x, cur_y)
@@ -51,7 +51,7 @@ class Maze(object):
                 path[(cur_x + 1, cur_y)] = (cur_x, cur_y)
                 nodes.append((cur_x + 1, cur_y))
             if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-                path[(cur_x - 1, cur_y - 1)] = (cur_x, cur_y)
+                path[(cur_x - 1, cur_y)] = (cur_x, cur_y)
                 nodes.append((cur_x - 1, cur_y))
             if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
                 path[(cur_x, cur_y + 1)] = (cur_x, cur_y)
