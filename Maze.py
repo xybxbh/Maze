@@ -2,11 +2,14 @@ import numpy as np
 from collections import deque
 import queue
 
+import matplotlib.pyplot as plt
+
 class Maze(object):
     def __init__(self, p, d):
         self.occ_p = p
         self.dim = d
         self.env = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
+        # self.env = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
         self.env[0][0] = 0
         self.env[d - 1][d - 1] = 0
 
@@ -52,7 +55,7 @@ class Maze(object):
                 path[(cur_x + 1, cur_y)] = (cur_x, cur_y)
                 nodes.append((cur_x + 1, cur_y))
             if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-                path[(cur_x - 1, cur_y - 1)] = (cur_x, cur_y)
+                path[(cur_x - 1, cur_y)] = (cur_x, cur_y)
                 nodes.append((cur_x - 1, cur_y))
             if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
                 path[(cur_x, cur_y + 1)] = (cur_x, cur_y)
@@ -194,51 +197,64 @@ class TestMaze(object):
         self.test_init()
         # self.test_bfs()
         # self.test_dfs()
-        self.test_astar()
-        self.test_bdBfs()
+        # self.test_astarManh()
+        self.test_astarEucl()
+        # self.test_bdBfs()
 
     def test_init(self):
         print(self.maze.env)
 
     def test_dfs(self):
         path = self.maze.dfs_solution()
-        if path == False:
-            print('pass')
-        else:
-            for t in path:
-                print(t)
+        self.printGraph(path)
 
     def test_bfs(self):
         path = self.maze.bfs_solution()
-        if path == False:
-            print('pass')
-        else:
-            for t in path:
-                print(t)
+        self.printGraph(path)
 
     def test_bdBfs(self):
         path = self.maze.bd_bfs_solution()
-        if path == False:
-            print('pass')
-        else:
-            for t in path:
-                print(t)
+        self.printGraph(path)
 
-    def test_astar(self):
-        path = self.maze.astarsearch_solution("Manhattan")
-        if path == False:
-            print('pass')
-        else:
-            for t in path:
-                print(t)
+    def test_astarEucl(self):
         path = self.maze.astarsearch_solution("Euclidean")
+        self.printGraph(path)
+
+    def test_astarManh(self):
+        path = self.maze.astarsearch_solution("Manhattan")
+        self.printGraph(path)
+
+    def printGraph(self, path):
+        print(path)
+        plt.xlim(0, self.maze.dim)
+        plt.ylim(0, self.maze.dim)
+        plt.xticks(range(0, self.maze.dim, 1))
+        plt.yticks(range(0, self.maze.dim, 1))
+        plt.grid(True, linestyle = "-", color = "black", linewidth = "0.5")
+        axes = plt.gca()
+        axes.tick_params(left = False, bottom = False, labelbottom = False, labelleft = False)
+
+        data = np.array(self.maze.env)
+        rows, cols = data.shape
+
+        axeslist_x = []
+        axeslist_y = []
+
         if path == False:
-            print('pass')
+            plt.title("NO SOLUTION")
         else:
             for t in path:
-                print(t)
+                (y, x) = t
+                axeslist_x.append(x + 0.5)
+                axeslist_y.append(self.maze.dim - y - 0.5)
+            plt.plot(axeslist_x, axeslist_y, c="red")
+        plt.imshow(data, cmap='gray_r', extent=[0, cols, 0, rows])
+
+        plt.show()
+
+
 
 
 if __name__ == "__main__":
-    TestMaze(0.1, 10)
+    TestMaze(0.2, 10)
 
