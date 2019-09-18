@@ -51,10 +51,13 @@ class Maze(object):
     def dfs_solution(self):
         nodes = [(0, 0)]
         path = {}
+        max_fringe_size = 1
         while nodes:
+            if len(nodes) > max_fringe_size:
+                max_fringe_size = len(nodes)
             (cur_x, cur_y) = nodes.pop()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                return self.backtrace(path)
+                return self.backtrace(path), max_fringe_size
             res = self.get_valid(cur_x, cur_y, path)
             if res:
                 for node in res:
@@ -202,6 +205,20 @@ class Maze(object):
                 fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x, cur_y - 1)))
         return False
 
+    def solve(self, alg, heuristicFunction = "Manhattan"):
+        if alg == "dfs":
+            return self.dfs_solution()
+        elif alg == "bfs":
+            return self.bfs_solution()
+        elif alg == "bdbfs":
+            return self.bd_bfs_solution()
+        elif alg == "a*" and heuristicFunction == "Manhattan":
+            return self.astarsearch_solution("Manhattan")
+        elif alg == "a*" and heuristicFunction == "Euclidean":
+            return self.astarsearch_solution("Euclidean")
+        else:
+            return False
+
 
 class TestMaze(object):
 
@@ -218,7 +235,7 @@ class TestMaze(object):
         print(self.maze.env)
 
     def test_dfs(self):
-        path = self.maze.dfs_solution()
+        path, max_fringe_size = self.maze.dfs_solution()
         self.printGraph(path)
 
     def test_bfs(self):
