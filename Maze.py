@@ -83,43 +83,59 @@ class Maze(object):
                 path_s[(cur_x_s + 1, cur_y_s)] = (cur_x_s, cur_y_s)
                 nodes_s.append((cur_x_s + 1, cur_y_s))
                 visited_s.append((cur_x_s + 1, cur_y_s))
+                if list(set(visited_s).intersection(set(visited_g))):
+                    finish = True
+                    break
             if cur_x_s - 1 >= 0 and self.env[cur_x_s - 1][cur_y_s] == 0 and (cur_x_s - 1, cur_y_s) not in path_s:
                 path_s[(cur_x_s - 1, cur_y_s)] = (cur_x_s, cur_y_s)
                 nodes_s.append((cur_x_s - 1, cur_y_s))
                 visited_s.append((cur_x_s - 1, cur_y_s))
+                if list(set(visited_s).intersection(set(visited_g))):
+                    finish = True
+                    break
             if cur_y_s + 1 < self.dim and self.env[cur_x_s][cur_y_s + 1] == 0 and (cur_x_s, cur_y_s + 1) not in path_s:
                 path_s[(cur_x_s, cur_y_s + 1)] = (cur_x_s, cur_y_s)
                 nodes_s.append((cur_x_s, cur_y_s + 1))
                 visited_s.append((cur_x_s, cur_y_s + 1))
+                if list(set(visited_s).intersection(set(visited_g))):
+                    finish = True
+                    break
             if cur_y_s - 1 >= 0 and self.env[cur_x_s][cur_y_s - 1] == 0 and (cur_x_s, cur_y_s - 1) not in path_s:
                 path_s[(cur_x_s, cur_y_s - 1)] = (cur_x_s, cur_y_s)
                 nodes_s.append((cur_x_s, cur_y_s - 1))
                 visited_s.append((cur_x_s, cur_y_s - 1))
-                
-            if list(set(visited_s).intersection(set(visited_g))):
-                finish = True
-                break
+                if list(set(visited_s).intersection(set(visited_g))):
+                    finish = True
+                    break
 
             if cur_x_g + 1 < self.dim and self.env[cur_x_g + 1][cur_y_g] == 0 and (cur_x_g + 1, cur_y_g) not in path_g:
                 path_g[(cur_x_g + 1, cur_y_g)] = (cur_x_g, cur_y_g)
                 nodes_g.append((cur_x_g + 1, cur_y_g))
                 visited_g.append((cur_x_g + 1, cur_y_g))
+                if list(set(visited_s).intersection(set(visited_g))):
+                    finish = True
+                    break
             if cur_x_g - 1 >= 0 and self.env[cur_x_g - 1][cur_y_g] == 0 and (cur_x_g - 1, cur_y_g) not in path_g:
                 path_g[(cur_x_g - 1, cur_y_g)] = (cur_x_g, cur_y_g)
                 nodes_g.append((cur_x_g - 1, cur_y_g))
                 visited_g.append((cur_x_g - 1, cur_y_g))
+                if list(set(visited_s).intersection(set(visited_g))):
+                    finish = True
+                    break
             if cur_y_g + 1 < self.dim and self.env[cur_x_g][cur_y_g + 1] == 0 and (cur_x_g, cur_y_g + 1) not in path_g:
                 path_g[(cur_x_g, cur_y_g + 1)] = (cur_x_g, cur_y_g)
                 nodes_g.append((cur_x_g, cur_y_g + 1))
                 visited_g.append((cur_x_g, cur_y_g + 1))
+                if list(set(visited_s).intersection(set(visited_g))):
+                    finish = True
+                    break
             if cur_y_g - 1 >= 0 and self.env[cur_x_g][cur_y_g - 1] == 0 and (cur_x_g, cur_y_g - 1) not in path_g:
                 path_g[(cur_x_g, cur_y_g - 1)] = (cur_x_g, cur_y_g)
                 nodes_g.append((cur_x_g, cur_y_g - 1))
                 visited_g.append((cur_x_g, cur_y_g - 1))
-
-            if list(set(visited_s).intersection(set(visited_g))):
-                finish = True
-                break
+                if list(set(visited_s).intersection(set(visited_g))):
+                    finish = True
+                    break
             
         if finish:
             path_list1 = list(set(visited_s).intersection(set(visited_g)))
@@ -129,7 +145,7 @@ class Maze(object):
             path_list2 = list(set(visited_s).intersection(set(visited_g)))
             while path_list2[-1] != (self.dim - 1, self.dim - 1):
                 path_list2.append(path_g[path_list2[-1]])
-
+            path_list1.pop()
             return path_list1 + path_list2
         else:
             return False
@@ -198,8 +214,8 @@ class TestMaze(object):
         # self.test_bfs()
         # self.test_dfs()
         # self.test_astarManh()
-        self.test_astarEucl()
-        # self.test_bdBfs()
+        # self.test_astarEucl()
+        self.test_bdBfs()
 
     def test_init(self):
         print(self.maze.env)
