@@ -13,6 +13,19 @@ class Maze(object):
         self.env[0][0] = 0
         self.env[d - 1][d - 1] = 0
 
+    def get_valid(self, cur_x, cur_y, path):
+        res = []
+        # valid: in the range, no obstruction, not visited
+        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
+            res.append((cur_x + 1, cur_y))
+        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
+            res.append((cur_x - 1, cur_y))
+        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
+            res.append((cur_x, cur_y + 1))
+        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
+            res.append((cur_x, cur_y - 1))
+        return res
+
     def bfs_solution(self):
         nodes = deque([(0, 0)])
         path = {}
@@ -25,19 +38,11 @@ class Maze(object):
                     path_list.append(path[path_list[-1]])
                 path_list.reverse()
                 return path_list
-            # valid: in the range, no obstruction, not visited
-            if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
-                path[(cur_x + 1, cur_y)] = (cur_x, cur_y)
-                nodes.append((cur_x + 1, cur_y))
-            if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-                path[(cur_x - 1, cur_y)] = (cur_x, cur_y)
-                nodes.append((cur_x - 1, cur_y))
-            if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
-                path[(cur_x, cur_y + 1)] = (cur_x, cur_y)
-                nodes.append((cur_x, cur_y + 1))
-            if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
-                path[(cur_x, cur_y - 1)] = (cur_x, cur_y)
-                nodes.append((cur_x, cur_y - 1))
+            res = self.get_valid(cur_x, cur_y, path)
+            if res:
+                for node in res:
+                    path[node] = (cur_x, cur_y)
+                    nodes.append(node)
         return False
 
     def dfs_solution(self):
@@ -51,18 +56,11 @@ class Maze(object):
                     path_list.append(path[path_list[-1]])
                 path_list.reverse()
                 return path_list
-            if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
-                path[(cur_x + 1, cur_y)] = (cur_x, cur_y)
-                nodes.append((cur_x + 1, cur_y))
-            if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-                path[(cur_x - 1, cur_y)] = (cur_x, cur_y)
-                nodes.append((cur_x - 1, cur_y))
-            if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
-                path[(cur_x, cur_y + 1)] = (cur_x, cur_y)
-                nodes.append((cur_x, cur_y + 1))
-            if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
-                path[(cur_x, cur_y - 1)] = (cur_x, cur_y)
-                nodes.append((cur_x, cur_y - 1))
+            res = self.get_valid(cur_x, cur_y, path)
+            if res:
+                for node in res:
+                    path[node] = (cur_x, cur_y)
+                    nodes.append(node)
         return False
 
     def bd_bfs_solution(self):
