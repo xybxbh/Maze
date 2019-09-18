@@ -13,6 +13,14 @@ class Maze(object):
         self.env[0][0] = 0
         self.env[d - 1][d - 1] = 0
 
+    def backtrace(self, path):
+        # backtrace the path, reference: https://stackoverflow.com/questions/8922060/how-to-trace-the-path-in-a-breadth-first-search
+        path_list = [(self.dim - 1, self.dim - 1)]
+        while path_list[-1] != (0, 0):
+            path_list.append(path[path_list[-1]])
+        path_list.reverse()
+        return path_list
+
     def get_valid(self, cur_x, cur_y, path):
         res = []
         # valid: in the range, no obstruction, not visited
@@ -32,12 +40,7 @@ class Maze(object):
         while nodes:
             (cur_x, cur_y) = nodes.popleft()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                # backtrace, reference: https://stackoverflow.com/questions/8922060/how-to-trace-the-path-in-a-breadth-first-search
-                path_list = [(self.dim - 1, self.dim - 1)]
-                while path_list[-1] != (0, 0):
-                    path_list.append(path[path_list[-1]])
-                path_list.reverse()
-                return path_list
+                return self.backtrace(path)
             res = self.get_valid(cur_x, cur_y, path)
             if res:
                 for node in res:
@@ -51,11 +54,7 @@ class Maze(object):
         while nodes:
             (cur_x, cur_y) = nodes.pop()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                path_list = [(self.dim - 1, self.dim - 1)]
-                while path_list[-1] != (0, 0):
-                    path_list.append(path[path_list[-1]])
-                path_list.reverse()
-                return path_list
+                return self.backtrace(path)
             res = self.get_valid(cur_x, cur_y, path)
             if res:
                 for node in res:
