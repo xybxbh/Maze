@@ -5,6 +5,16 @@ import queue
 import matplotlib.pyplot as plt
 
 class Maze(object):
+
+    class SolutionParams(object):
+        def __init__(self, has_path):
+            self.has_path = has_path
+
+        def dfs(self, has_path, path, max_fringe_size):
+            self.has_path = has_path
+            self.path = path
+            self.max_fringe_size = max_fringe_size
+
     def __init__(self, p, d):
         self.occ_p = p
         self.dim = d
@@ -34,36 +44,38 @@ class Maze(object):
             res.append((cur_x, cur_y - 1))
         return res
 
-    def bfs_solution(self):
-        nodes = deque([(0, 0)])
+    def bfs_solution(self): 
+        fringe = deque([(0, 0)])
         path = {}
-        while nodes:
-            (cur_x, cur_y) = nodes.popleft()
+        while fringe:
+            (cur_x, cur_y) = fringe.popleft()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
                 return self.backtrace(path)
             res = self.get_valid(cur_x, cur_y, path)
             if res:
                 for node in res:
                     path[node] = (cur_x, cur_y)
-                    nodes.append(node)
+                    fringe.append(node)
         return False
 
-    def dfs_solution(self):
-        nodes = [(0, 0)]
+    def dfs_solution(self): # return hasPath: bool; path: list; max_fringe_size: int
+        fringe = [(0, 0)]
         path = {}
         max_fringe_size = 1
-        while nodes:
-            if len(nodes) > max_fringe_size:
-                max_fringe_size = len(nodes)
-            (cur_x, cur_y) = nodes.pop()
+        solution_params = self.SolutionParams(False)
+        while fringe:
+            if len(fringe) > max_fringe_size:
+                max_fringe_size = len(fringe)
+            (cur_x, cur_y) = fringe.pop()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                return self.backtrace(path), max_fringe_size
+                solution_params.dfs(True, path, max_fringe_size)
+                return solution_params
             res = self.get_valid(cur_x, cur_y, path)
             if res:
                 for node in res:
                     path[node] = (cur_x, cur_y)
-                    nodes.append(node)
-        return False
+                    fringe.append(node)
+        return solution_params
 
     def bd_bfs_solution(self):
         nodes_s = deque([(0, 0)])
