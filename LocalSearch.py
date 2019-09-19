@@ -6,10 +6,10 @@ import math
 class LocalSearch(object):
     def __init__(self, ori_maze):
         self.ori_maze = ori_maze
-        self.cur_maze = ori_maze
+        self.update_maze_param(ori_maze)
         while self.cur_maze.solve("dfs") == False:
             regen_maze = Maze(ori_maze.occ_p, ori_maze.dim)
-            self.cur_maze = regen_maze
+            self.update_maze_param(regen_maze)
         self.sa_tem = 100
         self.sa_tmin = 1e-8
         self.sa_delta = 0.98
@@ -67,6 +67,7 @@ class LocalSearch(object):
             print('iterating')
 
 if __name__ == "__main__":
-    ori_maze = Maze(0.2, 10)
+    ori_maze = Maze(0.5, 10)
     sa = LocalSearch(ori_maze)
+    print(sa.cur_maze.env)
     sa.simulated_annealing("dfs")
