@@ -15,6 +15,12 @@ class LocalSearch(object):
         self.sa_tem = 1
         self.sa_tmin = 1e-8
         self.sa_delta = 0.98
+
+        self.population = 1000
+        self.genetic_iter = 20
+        self.breed_cnt = 500
+        self.mutant_rate = 0.9
+
     
     def update_maze_param(self, maze):
         '''self.env = self.cur_maze.env
@@ -82,11 +88,137 @@ class LocalSearch(object):
             self.sa_tem = self.sa_tem * self.sa_delta
             # print('t =', self.sa_tem)
 
+    def Maze_Generate(self, d):
+        p = random.uniform(0.3, 0.4)
+        tmp_m = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
+        while self.dfs(tmp_m, d) is False:
+            tmp_m = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
+        tmp_m[0][0] = 0
+        tmp_m[d - 1][d - 1] = 0
+        if self.dfs(tmp_m, d) is False:
+            print("ERROR")
+        return tmp_m
+
+    def dfs(self, m, dim):
+        fringe = deque([(0, 0)])
+        path = {}
+        while fringe:
+            (cur_x, cur_y) = fringe.popleft()
+            if cur_x == dim - 1 and cur_y == dim - 1:
+                path_list = [(dim - 1, dim - 1)]
+                while path_list[-1] != (0, 0):
+                    path_list.append(path[path_list[-1]])
+                path_list.reverse()
+                return len(path_list)
+            res = []
+            # valid: in the range, no obstruction, not visited
+            if cur_x + 1 < dim and m[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
+                res.append((cur_x + 1, cur_y))
+            if cur_x - 1 >= 0 and m[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
+                res.append((cur_x - 1, cur_y))
+            if cur_y + 1 < dim and m[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
+                res.append((cur_x, cur_y + 1))
+            if cur_y - 1 >= 0 and m[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
+                res.append((cur_x, cur_y - 1))
+            if res:
+                for node in res:
+                    path[node] = (cur_x, cur_y)
+                    fringe.append(node)
+        return False
+
+    def Maze_Score(self, m, d):
+        if self.dfs(m, d) is False:
+            return ori_maze.dim
+        else:
+            return self.dfs(m, d)
+
+    def Maze_merge(self, m1, m2, d):
+        m1_n = deepcopy(list(m1))
+        m2_n = deepcopy(list(m2))
+        m3 = m1_n[0:int(d/2)] + m2_n[int(d/2):d]
+        # m3 = m1
+        # for i in range(0, d):
+        #     for j in range(0, d):
+        #         if i < d / 2:
+        #             if j < d / 2:
+        #                 m3[i][j] = m1[i][j]
+        #             else:
+        #                 m3[i][j] = m2[i][j]
+        #         else:
+        #             if j < d / 2:
+        #                 m3[i][j] = m2[i][j]
+        #             else:
+        #                 m3[i][j] = m1[i][j]
+
+        if random.uniform(0, 1) < self.mutant_rate:
+            x = random.randint(1, self.cur_maze.dim - 2)
+            y = random.randint(1, self.cur_maze.dim - 2)
+            m3[x][y] = 1 - m3[x][y]
+        return m3
+
+    def random_picks(self, m_list, weight):
+        x = random.uniform(0, sum(weight))
+        cumulative_weight = 0.0
+        for m_list, m_weight in zip(m_list, weight):
+            cumulative_weight += m_weight
+            if x < cumulative_weight:
+                break
+        return m_list
+
+    def genetic_algorithm(self):
+        # Generate Parents
+        maze_population = []
+        for t in range(self.population):
+            maze_population.append(deepcopy(self.Maze_Generate(ori_maze.dim)))
+        weight = []
+
+        for k in range(self.genetic_iter):
+            print("k=", k)
+            weight.clear()
+            weight = [self.Maze_Score(maze_population[x], ori_maze.dim) for x in range(self.population)]
+            # Generate children
+            i = 0
+            while i < self.breed_cnt:
+
+                m1 = self.random_picks(maze_population, weight)
+                m2 = self.random_picks(maze_population, weight)
+                while m1 == m2:
+                    m2 = self.random_picks(maze_population, weight)
+                merge_m = self.Maze_merge(m1, m2, ori_maze.dim)
+
+                if self.dfs(merge_m, ori_maze.dim) is not False:
+                    maze_population.append(deepcopy(merge_m))
+                    weight.append(self.Maze_Score(merge_m, ori_maze.dim))
+                    self.population += 1
+                    i += 1
+
+            # Keep The fittest
+            weight_tmp = weight
+            min_k = np.partition(np.array(weight_tmp), self.breed_cnt - 1)[self.breed_cnt - 1]
+            j = 0
+            cnt = self.breed_cnt
+            while j < self.population and cnt > 0:
+                if weight[j] <= min_k:
+                    maze_population.pop(j)
+                    weight.pop(j)
+                    self.population -= 1
+                    cnt -= 1
+                j += 1
+
+        best_index = weight.index(max(weight))
+        print(weight, weight[best_index])
+        print(self.dfs(maze_population[best_index], ori_maze.dim))
+        return maze_population[best_index]
+
 if __name__ == "__main__":
-    ori_maze = Maze(0.3, 100)
+    ori_maze = Maze(0.3, 10)
     print('loop')
     sa = LocalSearch(ori_maze)
-    sa.simulated_annealing("dfs")
-    print(sa.num_ob)
-    print(sa.cur_maze.solve('dfs').max_fringe_size)
-    print(len(sa.cur_maze.solve('dfs').path))
+
+    maze0 = sa.genetic_algorithm()
+    print(maze0)
+    TestMaze(1, 10, maze0)
+    # sa.simulated_annealing("dfs")
+    # print(sa.num_ob)
+    # print(sa.cur_maze.solve('dfs').max_fringe_size)
+    # print(len(sa.cur_maze.solve('dfs').path))

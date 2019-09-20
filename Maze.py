@@ -15,13 +15,20 @@ class Maze(object):
             self.path = path
             self.max_fringe_size = max_fringe_size
 
-    def __init__(self, p, d):
-        self.occ_p = p
-        self.dim = d
-        self.env = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
-        # self.env = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-        self.env[0][0] = 0
-        self.env[d - 1][d - 1] = 0
+    def __init__(self, p, d, import_m=None):
+        if import_m:
+            self.dim = len(import_m)
+            self.env = [[import_m[row][col] for col in range(d)] for row in range(d)]
+        else:
+            self.occ_p = p
+            self.dim = d
+            self.env = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
+            # self.env = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+            self.env[0][0] = 0
+            self.env[d - 1][d - 1] = 0
+
+
+
 
     def backtrace(self, path):
         # backtrace the path, reference: https://stackoverflow.com/questions/8922060/how-to-trace-the-path-in-a-breadth-first-search
@@ -234,21 +241,21 @@ class Maze(object):
 
 class TestMaze(object):
 
-    def __init__(self, p, d):
-        self.maze = Maze(p, d)
-        self.test_init()
-        # self.test_bfs()
+    def __init__(self, p, d, input_maze=None):
+        self.maze = Maze(p, d, input_maze)
+        # self.test_init()
+        self.test_bfs()
         # self.test_dfs()
         # self.test_astarManh()
         # self.test_astarEucl()
-        self.test_bdBfs()
+        # self.test_bdBfs()
 
     def test_init(self):
         print(self.maze.env)
 
     def test_dfs(self):
-        path, max_fringe_size = self.maze.dfs_solution()
-        self.printGraph(path)
+        param = self.maze.dfs_solution()
+        self.printGraph(param.path)
 
     def test_bfs(self):
         path = self.maze.bfs_solution()
