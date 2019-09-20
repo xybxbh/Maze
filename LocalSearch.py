@@ -17,9 +17,9 @@ class LocalSearch(object):
         self.sa_delta = 0.98
 
         self.population = 1000
-        self.genetic_iter = 20
-        self.breed_cnt = 500
-        self.mutant_rate = 0.9
+        self.genetic_iter = 100
+        self.breed_cnt = 1000
+        self.mutant_rate = 0.6
 
     
     def update_maze_param(self, maze):
@@ -95,8 +95,6 @@ class LocalSearch(object):
             tmp_m = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
         tmp_m[0][0] = 0
         tmp_m[d - 1][d - 1] = 0
-        if self.dfs(tmp_m, d) is False:
-            print("ERROR")
         return tmp_m
 
     def dfs(self, m, dim):
@@ -132,24 +130,25 @@ class LocalSearch(object):
         else:
             return self.dfs(m, d)
 
-    def Maze_merge(self, m1, m2, d):
+    def Maze_merge(self, m1, m2, d, strategy):
         m1_n = deepcopy(list(m1))
         m2_n = deepcopy(list(m2))
-        m3 = m1_n[0:int(d/2)] + m2_n[int(d/2):d]
-        # m3 = m1
-        # for i in range(0, d):
-        #     for j in range(0, d):
-        #         if i < d / 2:
-        #             if j < d / 2:
-        #                 m3[i][j] = m1[i][j]
-        #             else:
-        #                 m3[i][j] = m2[i][j]
-        #         else:
-        #             if j < d / 2:
-        #                 m3[i][j] = m2[i][j]
-        #             else:
-        #                 m3[i][j] = m1[i][j]
-
+        if strategy == 1:
+            m3 = m1_n[0:int(d/2)] + m2_n[int(d/2):d]
+        elif strategy == 2:
+            m3 = m1_n
+            for i in range(0, d):
+                for j in range(0, d):
+                    if i < d / 2:
+                        if j < d / 2:
+                            m3[i][j] = m1_n[i][j]
+                        else:
+                            m3[i][j] = m2_n[i][j]
+                    else:
+                        if j < d / 2:
+                            m3[i][j] = m2_n[i][j]
+                        else:
+                            m3[i][j] = m1_n[i][j]
         if random.uniform(0, 1) < self.mutant_rate:
             x = random.randint(1, self.cur_maze.dim - 2)
             y = random.randint(1, self.cur_maze.dim - 2)
@@ -184,7 +183,7 @@ class LocalSearch(object):
                 m2 = self.random_picks(maze_population, weight)
                 while m1 == m2:
                     m2 = self.random_picks(maze_population, weight)
-                merge_m = self.Maze_merge(m1, m2, ori_maze.dim)
+                merge_m = self.Maze_merge(m1, m2, ori_maze.dim, 2)
 
                 if self.dfs(merge_m, ori_maze.dim) is not False:
                     maze_population.append(deepcopy(merge_m))
@@ -206,7 +205,7 @@ class LocalSearch(object):
                 j += 1
 
         best_index = weight.index(max(weight))
-        print(weight, weight[best_index])
+        print(maze_population[best_index])
         print(self.dfs(maze_population[best_index], ori_maze.dim))
         return maze_population[best_index]
 
@@ -216,7 +215,6 @@ if __name__ == "__main__":
     sa = LocalSearch(ori_maze)
 
     maze0 = sa.genetic_algorithm()
-    print(maze0)
     TestMaze(1, 10, maze0)
     # sa.simulated_annealing("dfs")
     # print(sa.num_ob)
