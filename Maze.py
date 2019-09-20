@@ -15,6 +15,11 @@ class Maze(object):
             self.path = path
             self.max_fringe_size = max_fringe_size
 
+        def aStar(self, has_path, path, max_nodes_expanded):
+            self.has_path = has_path
+            self.path = path
+            self.max_nodes_expaned = max_nodes_expanded
+
     def __init__(self, p, d, import_m=None):
         if import_m:
             self.dim = len(import_m)
@@ -43,10 +48,10 @@ class Maze(object):
         # valid: in the range, no obstruction, not visited
         if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
             res.append((cur_x + 1, cur_y))
-        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-            res.append((cur_x - 1, cur_y))
         if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
             res.append((cur_x, cur_y + 1))
+        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
+            res.append((cur_x - 1, cur_y))
         if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
             res.append((cur_x, cur_y - 1))
         return res
@@ -75,7 +80,7 @@ class Maze(object):
                 max_fringe_size = len(fringe)
             (cur_x, cur_y) = fringe.pop()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                solution_params.dfs(True, path, max_fringe_size)
+                solution_params.dfs(True, self.backtrace(path), max_fringe_size)
                 return solution_params
             res = self.get_valid(cur_x, cur_y, path)
             if res:
@@ -186,43 +191,25 @@ class Maze(object):
         fringe.put((0, 0, (0,0)))
         path = {}
         goal = (self.dim - 1, self.dim - 1)
+        max_nodes_expanded = 1
+        solution_params = self.SolutionParams(False)
         while not fringe.empty():
             (total_estCost, alr_cost, (cur_x, cur_y)) = fringe.get()
             if (cur_x, cur_y) == goal:
-                path_list = [(self.dim - 1, self.dim - 1)]
-                while path_list[-1] != (0, 0):
-                    path_list.append(path[path_list[-1]])
-                path_list.reverse()
-                return path_list
-            if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
-                if heuristicFunction == "Manhattan":
-                    est_cost = self.hf_manhattan((cur_x + 1, cur_y), (self.dim - 1, self.dim - 1))
-                elif heuristicFunction == "Euclidean":
-                    est_cost = self.hf_euclidean((cur_x + 1, cur_y), (self.dim - 1, self.dim - 1))
-                path[(cur_x + 1, cur_y)] = (cur_x, cur_y)
-                fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x + 1, cur_y)))
-            if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-                if heuristicFunction == "Manhattan":
-                    est_cost = self.hf_manhattan((cur_x - 1, cur_y), (self.dim - 1, self.dim - 1))
-                elif heuristicFunction == "Euclidean":
-                    est_cost = self.hf_euclidean((cur_x - 1, cur_y), (self.dim - 1, self.dim - 1))
-                path[(cur_x - 1, cur_y)] = (cur_x, cur_y)
-                fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x - 1, cur_y)))
-            if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
-                if heuristicFunction == "Manhattan":
-                    est_cost = self.hf_manhattan((cur_x, cur_y + 1), (self.dim - 1, self.dim - 1))
-                elif heuristicFunction == "Euclidean":
-                    est_cost = self.hf_euclidean((cur_x, cur_y + 1), (self.dim - 1, self.dim - 1))
-                path[(cur_x, cur_y + 1)] = (cur_x, cur_y)
-                fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x, cur_y + 1)))
-            if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
-                if heuristicFunction == "Manhattan":
-                    est_cost = self.hf_manhattan((cur_x, cur_y - 1), (self.dim - 1, self.dim - 1))
-                elif heuristicFunction == "Euclidean":
-                    est_cost = self.hf_euclidean((cur_x, cur_y - 1), (self.dim - 1, self.dim - 1))
-                path[(cur_x, cur_y - 1)] = (cur_x, cur_y)
-                fringe.put((total_estCost + est_cost, alr_cost + 1, (cur_x, cur_y - 1)))
-        return False
+                solution_params.aStar(True, self.backtrace(path), max_nodes_expanded)
+                return solution_params
+            max_nodes_expanded += 1
+            res = self.get_valid(cur_x, cur_y, path)
+            if res:
+                for node in res:
+                    path[node] = (cur_x, cur_y)
+                    if heuristicFunction == "Manhattan":
+                        est_cost = self.hf_manhattan(node, (self.dim - 1, self.dim - 1))
+                    elif heuristicFunction == "Euclidean":
+                        est_cost = self.hf_euclidean(node, (self.dim - 1, self.dim - 1))
+                    path[node] = (cur_x, cur_y)
+                    fringe.put((total_estCost + est_cost, alr_cost + 1, node))
+        return solution_params
 
     def solve(self, alg, heuristicFunction = "Manhattan"):
         if alg == "dfs":
@@ -244,8 +231,8 @@ class TestMaze(object):
     def __init__(self, p, d, input_maze=None):
         self.maze = Maze(p, d, input_maze)
         # self.test_init()
-        self.test_bfs()
-        # self.test_dfs()
+        # self.test_bfs()
+        self.test_dfs()
         # self.test_astarManh()
         # self.test_astarEucl()
         # self.test_bdBfs()
@@ -255,7 +242,11 @@ class TestMaze(object):
 
     def test_dfs(self):
         param = self.maze.dfs_solution()
-        self.printGraph(param.path)
+        if param.has_path:
+            print(param.path)
+            self.printGraph(param.path)
+        else:
+            self.printGraph(param.has_path)
 
     def test_bfs(self):
         path = self.maze.bfs_solution()
@@ -270,8 +261,8 @@ class TestMaze(object):
         self.printGraph(path)
 
     def test_astarManh(self):
-        path = self.maze.astarsearch_solution("Manhattan")
-        self.printGraph(path)
+        path1 = self.maze.astarsearch_solution("Manhattan")
+        self.printGraph(path1.path)
 
     def printGraph(self, path):
         print(path)
@@ -305,5 +296,5 @@ class TestMaze(object):
 
 
 if __name__ == "__main__":
-    TestMaze(0.2, 10)
+    TestMaze(0.2, 100)
 
