@@ -25,7 +25,7 @@ class Maze(object):
             self.dim = len(import_m)
             self.env = [[import_m[row][col] for col in range(d)] for row in range(d)]
         else:
-            self.occ_p = p
+            self.occ_rate = p
             self.dim = d
             self.env = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
             # self.env = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
@@ -186,9 +186,16 @@ class Maze(object):
         (x2, y2) = node2
         return np.sqrt(np.square(x2 - x1) + np.square(y2 - y1))
 
-    def astarsearch_solution(self, heuristicFunction):
+    def hf_choose(self, function, node1, node2):
+        if function == "Manhattan":
+            return hf_manhattan(node1, node2)
+        elif function == "Euclidean":
+            return hf_euclidean(node1, node2)
+        return False
+
+    def astarsearch_solution(self, heuristicFunction, start):
         fringe = queue.PriorityQueue()
-        fringe.put((0, 0, (0,0)))
+        fringe.put((0, 0, start))
         path = {}
         goal = (self.dim - 1, self.dim - 1)
         max_nodes_expanded = 1
@@ -203,25 +210,20 @@ class Maze(object):
             if res:
                 for node in res:
                     path[node] = (cur_x, cur_y)
-                    if heuristicFunction == "Manhattan":
-                        est_cost = self.hf_manhattan(node, (self.dim - 1, self.dim - 1))
-                    elif heuristicFunction == "Euclidean":
-                        est_cost = self.hf_euclidean(node, (self.dim - 1, self.dim - 1))
+                    est_cost = self.hf_choose(heuristicFunction, node, goal)
                     path[node] = (cur_x, cur_y)
                     fringe.put((total_estCost + est_cost, alr_cost + 1, node))
         return solution_params
 
-    def solve(self, alg, heuristicFunction = "Manhattan"):
+    def solve(self, alg, heuristicFunction = "Manhattan", start = (0, 0)):
         if alg == "dfs":
             return self.dfs_solution()
         elif alg == "bfs":
             return self.bfs_solution()
         elif alg == "bdbfs":
             return self.bd_bfs_solution()
-        elif alg == "a*" and heuristicFunction == "Manhattan":
-            return self.astarsearch_solution("Manhattan")
-        elif alg == "a*" and heuristicFunction == "Euclidean":
-            return self.astarsearch_solution("Euclidean")
+        elif alg == "a*":
+            return self.astarsearch_solution(heuristicFunction, start)
         else:
             return False
 
