@@ -33,7 +33,7 @@ class MazeState(Maze):
     def hf_choose(self, function, node1, node2):
         if function == "survivalrate":
             w1, w2 = 0, 0
-            return self.hf_survivalrate(node1)*w1 + super().hf_manhattan(node1, node2)*w2
+            return self.hf_survivalrate(node1)*w1 + self.hf_manhattan(node1, node2)*w2
         return False
 
     def hf_survivalrate(self, node1):
@@ -47,7 +47,7 @@ class MazeState(Maze):
         return pow((1 - self.fla_rate), k)
 
     def update_path(self):
-        params = super().astarsearch_solution('survivalrate', self.cur_pos)
+        params = self.astarsearch_solution('survivalrate', self.cur_pos)
         if params.has_path:
             self.cur_pos = params.path[1]
         return
@@ -57,6 +57,7 @@ def experiment(maze_state):
         print('updating')
         maze_state.update_path()
         maze_state.update_maze()
+        print(maze_state.cur_pos)
         (cur_x, cur_y) = maze_state.cur_pos
         if maze_state.env[cur_x][cur_y] == -1:
             return False

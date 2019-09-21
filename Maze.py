@@ -35,10 +35,10 @@ class Maze(object):
 
 
 
-    def backtrace(self, path):
+    def backtrace(self, path, start):
         # backtrace the path, reference: https://stackoverflow.com/questions/8922060/how-to-trace-the-path-in-a-breadth-first-search
         path_list = [(self.dim - 1, self.dim - 1)]
-        while path_list[-1] != (0, 0):
+        while path_list[-1] != start:
             path_list.append(path[path_list[-1]])
         path_list.reverse()
         return path_list
@@ -62,7 +62,7 @@ class Maze(object):
         while fringe:
             (cur_x, cur_y) = fringe.popleft()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                return self.backtrace(path)
+                return self.backtrace(path, (0, 0))
             res = self.get_valid(cur_x, cur_y, path)
             if res:
                 for node in res:
@@ -80,7 +80,7 @@ class Maze(object):
                 max_fringe_size = len(fringe)
             (cur_x, cur_y) = fringe.pop()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                solution_params.dfs(True, self.backtrace(path), max_fringe_size)
+                solution_params.dfs(True, self.backtrace(path, (0, 0)), max_fringe_size)
                 return solution_params
             res = self.get_valid(cur_x, cur_y, path)
             if res:
@@ -203,7 +203,8 @@ class Maze(object):
         while not fringe.empty():
             (total_estCost, alr_cost, (cur_x, cur_y)) = fringe.get()
             if (cur_x, cur_y) == goal:
-                solution_params.aStar(True, self.backtrace(path), max_nodes_expanded)
+                # print(self.backtrace(path, start))
+                solution_params.aStar(True, self.backtrace(path, start), max_nodes_expanded)
                 return solution_params
             max_nodes_expanded += 1
             res = self.get_valid(cur_x, cur_y, path)
