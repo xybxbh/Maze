@@ -4,24 +4,24 @@ from Maze import *
 import math
 import numpy as np
 
+
 class LocalSearch(object):
     def __init__(self, ori_maze):
         self.ori_maze = ori_maze
         self.update_maze_param(ori_maze)
         while self.cur_maze.solve("dfs").has_path == False:
             print('false')
-            regen_maze = Maze(ori_maze.occ_p, ori_maze.dim)
+            regen_maze = Maze(ori_maze.occ_rate, ori_maze.dim)
             self.update_maze_param(regen_maze)
         self.sa_tem = 1
         self.sa_tmin = 1e-8
         self.sa_delta = 0.98
 
         self.population = 1000
-        self.genetic_iter = 100
+        self.genetic_iter = 2
         self.breed_cnt = 1000
         self.mutant_rate = 0.6
 
-    
     def update_maze_param(self, maze):
         self.cur_maze = maze
         self.num_ob = self.get_obstruction_num()
@@ -40,7 +40,7 @@ class LocalSearch(object):
         p_o2z = random.random()
         it = 0
         new_maze = deepcopy(self.cur_maze)
-        while(True):
+        while (True):
             if p_cutpath < 0.6:
                 path = self.cur_maze.solve('dfs').path
                 index = random.randint(1, len(path) - 2)
@@ -51,7 +51,7 @@ class LocalSearch(object):
             y = random.randint(0, self.cur_maze.dim - 1)
             if (x == 0 and y == 0) or (x == self.cur_maze.dim - 1 and y == self.cur_maze.dim - 1):
                 continue
-            if self.cur_maze.env[x][y] == 0 or p_o2z < self.num_ob/(self.cur_maze.dim*self.cur_maze.dim):
+            if self.cur_maze.env[x][y] == 0 or p_o2z < self.num_ob / (self.cur_maze.dim * self.cur_maze.dim):
                 new_maze.env[x][y] = 1 - new_maze.env[x][y]
                 # solvablility certification in the sa function
                 break
@@ -78,61 +78,44 @@ class LocalSearch(object):
                 continue
             p = random.random()
             comparator = self.comparator(alg, 'max_fringe_size', new_maze)
-            p_sa = 1/(1 + math.exp(0 - comparator/self.sa_tem)) if (0 - comparator/self.sa_tem) < 500 else 0
+            p_sa = 1 / (1 + math.exp(0 - comparator / self.sa_tem)) if (0 - comparator / self.sa_tem) < 500 else 0
             if comparator > 0 or p < p_sa:
                 self.update_maze_param(new_maze)
                 print('comparator =', comparator)
                 print(sa.cur_maze.solve('dfs').max_fringe_size)
                 print(len(self.cur_maze.solve('dfs').path))
             self.sa_tem = self.sa_tem * self.sa_delta
-            #print('t =', self.sa_tem)
+            # print('t =', self.sa_tem)
 
     def Maze_Generate(self, d):
         p = random.uniform(0.3, 0.4)
         tmp_m = Maze(p, d)
         while not tmp_m.solve('dfs').has_path:
             tmp_m = Maze(p, d)
+        tmp_m.env[0][0] = 0
+        tmp_m.env[d - 1][d - 1] = 0
         return tmp_m
 
-    def dfs(self, m, dim):
-        fringe = deque([(0, 0)])
-        path = {}
-        while fringe:
-            (cur_x, cur_y) = fringe.popleft()
-            if cur_x == dim - 1 and cur_y == dim - 1:
-                path_list = [(dim - 1, dim - 1)]
-                while path_list[-1] != (0, 0):
-                    path_list.append(path[path_list[-1]])
-                path_list.reverse()
-                return len(path_list)
-            res = []
-            # valid: in the range, no obstruction, not visited
-            if cur_x + 1 < dim and m[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
-                res.append((cur_x + 1, cur_y))
-            if cur_x - 1 >= 0 and m[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-                res.append((cur_x - 1, cur_y))
-            if cur_y + 1 < dim and m[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
-                res.append((cur_x, cur_y + 1))
-            if cur_y - 1 >= 0 and m[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
-                res.append((cur_x, cur_y - 1))
-            if res:
-                for node in res:
-                    path[node] = (cur_x, cur_y)
-                    fringe.append(node)
-        return False
-
-    def Maze_Score(self, m, d):
-        if m.solve('dfs').has_path is False:
+    def Maze_Score(self, m, d, alg):
+        if m.solve(alg) is False:
             return ori_maze.dim
         else:
-            return len(m.solve('dfs').path)
+            if alg == 'dfs':
+                params_m = m.solve(alg)
+                return params_m.max_fringe_size
+            elif alg == 'a*':
+                params_m = m.solve(alg)
+                return params_m.max_nodes_expanded
+            else:
+                print("Only support dfs and a*")
 
     def Maze_merge(self, m1, m2, d, strategy):
         m1_n = deepcopy(m1)
         m2_n = deepcopy(m2)
         if strategy == 1:
-            m3.env = m1_n.env[0:int(d/2)] + m2_n.env[int(d/2):d]
-        elif strategy == 2:
+            m3 = Maze(1, d)
+            m3.env = m1_n.env[0:int(d / 2)] + m2_n.env[int(d / 2):d]
+        else:
             m3 = m1_n
             for i in range(0, d):
                 for j in range(0, d):
@@ -161,7 +144,7 @@ class LocalSearch(object):
                 break
         return m_list
 
-    def genetic_algorithm(self):
+    def genetic_algorithm(self, alg):
         # Generate Parents
         maze_population = []
         for t in range(self.population):
@@ -171,7 +154,7 @@ class LocalSearch(object):
         for k in range(self.genetic_iter):
             print("k=", k)
             weight.clear()
-            weight = [self.Maze_Score(maze_population[x], ori_maze.dim) for x in range(self.population)]
+            weight = [self.Maze_Score(maze_population[x], ori_maze.dim, alg) for x in range(self.population)]
             # Generate children
             i = 0
             while i < self.breed_cnt:
@@ -184,7 +167,7 @@ class LocalSearch(object):
 
                 if merge_m.solve('dfs').has_path:
                     maze_population.append(deepcopy(merge_m))
-                    weight.append(self.Maze_Score(merge_m, ori_maze.dim))
+                    weight.append(self.Maze_Score(merge_m, ori_maze.dim, alg))
                     self.population += 1
                     i += 1
 
@@ -203,16 +186,17 @@ class LocalSearch(object):
 
         best_index = weight.index(max(weight))
         print(maze_population[best_index])
-        print(len(maze_population[best_index].solve('dfs').path))
+
+        print(len(maze_population[best_index].solve(alg).path))
         return maze_population[best_index]
+
 
 if __name__ == "__main__":
     ori_maze = Maze(0.2, 30)
     sa = LocalSearch(ori_maze)
+    maze0 = sa.genetic_algorithm('dfs')
+    TestMaze(1, 30, maze0)
 
-    maze0 = sa.genetic_algorithm()
-    TestMaze(1, 10, maze0)
-    
     # sa.simulated_annealing("dfs")
     # print(sa.sa_tem)
     # print(sa.num_ob)
