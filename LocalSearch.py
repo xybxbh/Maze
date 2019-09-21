@@ -53,6 +53,7 @@ class LocalSearch(object):
                 continue
             if self.cur_maze.env[x][y] == 0 or p_o2z < self.num_ob/(self.cur_maze.dim*self.cur_maze.dim):
                 new_maze.env[x][y] = 1 - new_maze.env[x][y]
+                # solvablility certification in the sa function
                 break
             else:
                 print(x, y)
@@ -61,9 +62,6 @@ class LocalSearch(object):
                 print('iter protection')
                 break
         return new_maze
-
-    def gen_maze_visitall():
-        return
 
     def comparator(self, alg, param, maze):
         params_new = maze.solve(alg)
