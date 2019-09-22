@@ -353,14 +353,14 @@ if __name__ == "__main__":
     ori_maze = Maze(0.1, 30)
     sa = LocalSearch(ori_maze)
 
-    # max_fringe_size, i, maze1 = sa.beam_search("dfs", 10, 30)
-    # path = maze1.solve("dfs").path
-    # print(max_fringe_size)
-    # printGraph(maze1, path)
+    max_fringe_size, i, maze1 = sa.beam_search("a*", 10, 30)
+    path = maze1.solve("a*").path
+    print(max_fringe_size)
+    printGraph(maze1, path)
 
     # maze0 = sa.genetic_algorithm()
-    maze0 = sa.genetic_algorithm('dfs')
-    TestMaze(1, 30, maze0)
+    # maze0 = sa.genetic_algorithm('dfs')
+    # TestMaze(1, 30, maze0)
 
     # sa.simulated_annealing("dfs")
     # # print(sa.sa_tem)
