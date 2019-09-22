@@ -43,14 +43,14 @@ class Maze(object):
     def get_valid(self, cur_x, cur_y, path):
         res = []
         # valid: in the range, no obstruction, not visited
-        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
-            res.append((cur_x + 1, cur_y))
-        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
-            res.append((cur_x, cur_y + 1))
         if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
             res.append((cur_x - 1, cur_y))
         if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
             res.append((cur_x, cur_y - 1))
+        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
+            res.append((cur_x, cur_y + 1))
+        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
+            res.append((cur_x + 1, cur_y))
         return res
 
     def bfs_solution(self):
@@ -185,9 +185,9 @@ class Maze(object):
 
     def hf_choose(self, function, node1, node2):
         if function == "Manhattan":
-            return hf_manhattan(node1, node2)
+            return self.hf_manhattan(node1, node2)
         elif function == "Euclidean":
-            return hf_euclidean(node1, node2)
+            return self.hf_euclidean(node1, node2)
         return False
 
     def astarsearch_solution(self, heuristicFunction, start):
@@ -209,8 +209,7 @@ class Maze(object):
                 for node in res:
                     path[node] = (cur_x, cur_y)
                     est_cost = self.hf_choose(heuristicFunction, node, goal)
-                    path[node] = (cur_x, cur_y)
-                    fringe.put((total_estCost + est_cost, alr_cost + 1, node))
+                    fringe.put((total_estCost + est_cost + alr_cost + 1, alr_cost + 1, node))
         return solution_params
 
     def solve(self, alg, heuristicFunction="Manhattan", start=(0, 0)):
@@ -232,8 +231,8 @@ class TestMaze(object):
         self.maze = Maze(p, d, input_maze)
         # self.test_init()
         # self.test_bfs()
-        self.test_dfs()
-        # self.test_astarManh()
+        # self.test_dfs()
+        self.test_astarManh()
         # self.test_astarEucl()
         # self.test_bddfs()
 
@@ -261,7 +260,8 @@ class TestMaze(object):
         self.printGraph(path)
 
     def test_astarManh(self):
-        path1 = self.maze.astarsearch_solution("Manhattan")
+        path1 = self.maze.solve("a*")
+        print(path1.max_nodes_expaned)
         self.printGraph(path1.path)
 
     def printGraph(self, path):
@@ -294,5 +294,5 @@ class TestMaze(object):
 
 
 if __name__ == "__main__":
-    TestMaze(0.2, 10)
+    TestMaze(0.05, 30)
 

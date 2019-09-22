@@ -2,8 +2,9 @@ import random
 from copy import deepcopy
 from Maze import *
 import math
+import queue
 import numpy as np
-
+from VisualizationPath import printGraph
 
 class LocalSearch(object):
     def __init__(self, ori_maze):
@@ -22,6 +23,10 @@ class LocalSearch(object):
         self.breed_cnt = 1000
         self.mutant_rate = 0.6
 
+    def gen_ini_maze(self):
+        self.ori_maze = ori_maze
+
+
     def update_maze_param(self, maze):
         self.cur_maze = maze
         self.num_ob = self.get_obstruction_num()
@@ -34,7 +39,15 @@ class LocalSearch(object):
                     count += 1
         return count
 
-    def gen_maze(self):
+    def get_obstruction_num2(self, cur_maze):
+        count = 0
+        for i in range(cur_maze.dim):
+            for j in range(cur_maze.dim):
+                if cur_maze.env[i][j] == 1:
+                    count += 1
+        return count
+
+    def gen_maze(self, path):
         # one random neighbor in each iteration
         p_cutpath = random.random()
         p_o2z = random.random()
@@ -42,7 +55,7 @@ class LocalSearch(object):
         new_maze = deepcopy(self.cur_maze)
         while (True):
             if p_cutpath < 0.6:
-                path = self.cur_maze.solve('dfs').path
+                # path = self.cur_maze.solve('dfs').path
                 index = random.randint(1, len(path) - 2)
                 (x_cut, y_cut) = path[index]
                 new_maze.env[x_cut][y_cut] = 1
@@ -63,29 +76,174 @@ class LocalSearch(object):
                 break
         return new_maze
 
-    def comparator(self, alg, param, maze):
+
+    def gen_maze3(self, cur_maze, iter):
+        # one random neighbor in each iteration
+        p_cutpath = random.random()
+        it = 0
+        new_maze = deepcopy(cur_maze)
+        path_param =  cur_maze.solve("dfs")
+        path = path_param.path
+        max_fringe_size = path_param.max_fringe_size
+        while(True):
+            # x, y = path[random.randint(0, len(path) - 1)]
+            # new_maze.env[x][y] = 1
+            # if new_maze.solve("dfs").has_path == False:
+            #     it += 1
+            #     new_maze.env[x][y] = 0
+            # else:
+            #     break
+            # if p_cutpath < 0.6:
+            if iter < 30:
+                path = self.cur_maze.solve('dfs').path
+                index = random.randint(1, len(path) - 2)
+                (x_cut, y_cut) = path[index]
+                new_maze.env[x_cut][y_cut] = 1
+
+            x = random.randint(0, cur_maze.dim - 1)
+            y = random.randint(0, cur_maze.dim - 1)
+
+            if (x == 0 and y == 0) or (x == self.cur_maze.dim - 1 and y == self.cur_maze.dim - 1):
+                continue
+            if cur_maze.env[x][y] == 0:
+                new_maze.env[x][y] = 1
+                if new_maze.solve("dfs").has_path == False:
+                    it += 1
+                else:
+                    break
+            if it == 1000:
+                print('iter protection')
+                return False
+        return new_maze
+
+    def gen_maze4(self, cur_maze, iter):
+        # one random neighbor in each iteration
+        p = random.random()
+        it = 0
+        new_maze = deepcopy(cur_maze)
+        while(True):
+            change = 0
+            if iter < 30:
+                for i in range(0, 3):
+                    x = random.randint(0, cur_maze.dim - 1)
+                    y = random.randint(0, cur_maze.dim - 1)
+                    if cur_maze.env[x][y] == 0:
+                        new_maze.env[x][y] = 1
+                        change = 1
+            else:
+                x = random.randint(0, cur_maze.dim - 1)
+                y = random.randint(0, cur_maze.dim - 1)
+                if cur_maze.env[x][y] == 0:
+                    new_maze.env[x][y] = 1
+                    change = 1
+            if change == 1:
+                if new_maze.solve("dfs").has_path == False:
+                    it += 1
+                else:
+                    break
+            # elif cur_maze.env[x][y] == 1 and p < num_ob/(cur_maze.dim * cur_maze.dim):
+            #     new_maze.env[x][y] = 0
+            #     if new_maze.solve("dfs").has_path == False:
+            #         it += 1
+            #     else:
+            #         break
+            else:
+                # print(x, y)
+                it += 1
+            if it == 1000:
+                print('iter protection')
+                return False
+        return new_maze
+
+    def comparator(self, alg, maze):
         params_new = maze.solve(alg)
         params_cur = self.cur_maze.solve(alg)
-        if param == 'max_fringe_size':
+        if alg == 'dfs':
             return params_new.max_fringe_size - params_cur.max_fringe_size
+        elif alg == "a*":
+            return params_new.max_nodes_expanded - params_cur.max_nodes_expaned
         return False
 
     def simulated_annealing(self, alg):
         while self.sa_tem > self.sa_tmin:
             # here we can do search with multi-neighbors
-            new_maze = self.gen_maze()
-            if not new_maze.solve('dfs').has_path:
+            new_maze = self.gen_maze(self.cur_maze.solve(alg).path)
+            if not new_maze.solve(alg).has_path:
                 continue
             p = random.random()
-            comparator = self.comparator(alg, 'max_fringe_size', new_maze)
+            comparator = self.comparator(alg, new_maze)
             p_sa = 1 / (1 + math.exp(0 - comparator / self.sa_tem)) if (0 - comparator / self.sa_tem) < 500 else 0
             if comparator > 0 or p < p_sa:
                 self.update_maze_param(new_maze)
                 print('comparator =', comparator)
-                print(sa.cur_maze.solve('dfs').max_fringe_size)
-                print(len(self.cur_maze.solve('dfs').path))
+                print(self.get_search_condition(alg, self.cur_maze.solve(alg)))
+                print(len(self.cur_maze.solve(alg).path))
             self.sa_tem = self.sa_tem * self.sa_delta
             # print('t =', self.sa_tem)
+
+    def get_search_condition(self, alg, path_result_param):
+        if alg == "dfs":
+            return path_result_param.max_fringe_size
+        elif alg == "a*":
+            return path_result_param.max_nodes_expanded
+
+    def gen_ini_maze_bs(self, alg, m):
+        ini_maze_list = queue.PriorityQueue()
+        index = 0
+        for i in range(0, m):
+            maze = Maze(self.ori_maze.occ_rate, self.ori_maze.dim)
+            path_result_param = maze.solve(alg)
+            while path_result_param.has_path == False:
+                maze = Maze(self.ori_maze.occ_rate, self.ori_maze.dim)
+                path_result_param = maze.solve(alg)
+            ini_maze_list.put((-self.get_search_condition(alg, path_result_param), index, maze))
+            index += 1
+        print("ini_finished")
+        return (ini_maze_list, index)
+
+    def beam_search(self, alg, m, k):
+        cur_maze_list, index = self.gen_ini_maze_bs(alg, m)
+        hard_maze_list = queue.PriorityQueue()
+        new_maze_list = queue.PriorityQueue()
+        beam_search_iter = 0
+        while not cur_maze_list.empty():
+            beam_search_iter += 1
+            if beam_search_iter == 200:
+                break
+            print("_________________________beam_search+" + str(beam_search_iter))
+            for i in range(0, m):
+                if cur_maze_list.empty():
+                    break
+                temp_maze_list = queue.PriorityQueue()
+                cur_max_condition, cur_index, cur_maze = cur_maze_list.get()
+                print("cur_best_size: " + str(cur_max_condition))
+                for j in range(0, k):
+                    new_maze = self.gen_maze4(cur_maze, beam_search_iter)
+                    if new_maze:
+                        new_path_param = new_maze.solve(alg)
+                        if self.get_search_condition(alg, new_path_param) <= -cur_max_condition:
+                            continue
+                        temp_maze_list.put((-self.get_search_condition(alg, new_path_param), index, new_maze))
+                        index += 1
+                    else:
+                        hard_maze_list.put((cur_max_condition, cur_index, cur_maze))
+                        print("nochild: " + str(cur_max_condition))
+                        break
+                if temp_maze_list.empty():
+                    print("localbest: " + str(cur_max_condition))
+                    hard_maze_list.put((cur_max_condition, cur_index, cur_maze))
+                else:
+                    for len_queue in range(0, k):
+                        if temp_maze_list.empty():
+                            break
+                        a = temp_maze_list.get()
+                        print(a[0])
+                        new_maze_list.put(a)
+            for len_queue in range(0, m):
+                if new_maze_list.empty():
+                    break
+                cur_maze_list.put(new_maze_list.get())
+        return hard_maze_list.get()
 
     def Maze_Generate(self, d):
         p = random.uniform(0.3, 0.4)
@@ -187,18 +345,26 @@ class LocalSearch(object):
         best_index = weight.index(max(weight))
         print(maze_population[best_index])
 
-        print(len(maze_population[best_index].solve(alg).path))
+        # print(len(maze_population[best_index].solve(alg).path))
         return maze_population[best_index]
 
 
 if __name__ == "__main__":
-    ori_maze = Maze(0.2, 30)
+    ori_maze = Maze(0.1, 30)
     sa = LocalSearch(ori_maze)
+
+    # max_fringe_size, i, maze1 = sa.beam_search("dfs", 10, 30)
+    # path = maze1.solve("dfs").path
+    # print(max_fringe_size)
+    # printGraph(maze1, path)
+
+    # maze0 = sa.genetic_algorithm()
     maze0 = sa.genetic_algorithm('dfs')
     TestMaze(1, 30, maze0)
 
     # sa.simulated_annealing("dfs")
-    # print(sa.sa_tem)
-    # print(sa.num_ob)
+    # # print(sa.sa_tem)
+    # # print(sa.num_ob)
     # print(sa.cur_maze.solve('dfs').max_fringe_size)
-    # print(len(sa.cur_maze.solve('dfs').path))
+    # # print(len(sa.cur_maze.solve('dfs').path))
+    # printGraph(sa.cur_maze, sa.cur_maze.solve('dfs').path)
