@@ -7,12 +7,23 @@ class MazeState(Maze):
         Maze.__init__(self, p, d)
         self.cur_pos = (0, 0)
         self.fla_rate = q
-        self.env[0][self.dim - 1] = -1
 
         self.ant_num = 1000
         self.iter_time = 1000
         self.weight = []
         self.alpha = 0.1
+
+        self.re_init_check()
+        self.env[0][self.dim - 1] = -1  # set fire after reinitialize check
+
+    def re_init_check(self):
+        # a better way is to add start and end node in search methods, but deepcopy is more convenient in coding
+        self_reverse = deepcopy(self)
+        for row in range(self_reverse.dim):
+            self_reverse.env[row] = reversed(self_reverse.env[row])
+        while self.solve("dfs").has_path is False or self_reverse.solve('dfs').has_path is False:
+            print('reinit')
+            self = MazeState(self.occ_rate, self.dim, self.fla_rate)
 
     def update_maze(self):
         p = random.random()
