@@ -83,7 +83,7 @@ class MazeState(Maze):
             if params.has_path:
                 self.cur_pos = params.path[1]
         else:
-            self.cur_pos = self.path(path_cnt)
+            self.cur_pos = self.path[path_cnt]
             return
 
     def path_choosing(self, cur_x, cur_y, path):
@@ -149,7 +149,7 @@ class MazeState(Maze):
         if alg == 'aco':
             self.path = self.aco()
         else:
-            self.path = self.solve(alg)
+            self.path = self.solve(alg).path
 
 
 def experiment(maze_state):
