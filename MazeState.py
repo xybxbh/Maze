@@ -21,7 +21,7 @@ class MazeState(Maze):
         for row in range(self.dim):
             for col in range(self.dim):
                 node1 = (row, col)
-                if p > self.hf_survivalrate((row, col)):
+                if self.env[row][col] == 0 and p > self.hf_survivalrate((row, col)):
                     self.env[row][col] = -1
 
     def fire_spreading(self):
