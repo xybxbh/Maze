@@ -10,9 +10,12 @@ class MazeState(Maze):
         self.fla_rate = q
 
         self.ant_num = 1000
-        self.iter_time = 1000
+        self.iter_time = 200
         self.weight = []
-        self.alpha = 0.1
+        self.heuristic = []
+        self.alpha = 1
+        self.beta = 1
+        self.rou = 1
         self.path = None
 
         self.re_init_check()
@@ -75,29 +78,36 @@ class MazeState(Maze):
         weights = {}
         for node in neighbors:
             weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
-        return max(weights, key = weights.get)
+        return max(weights, key=weights.get)
 
-    def update_path(self, path_cnt):
+    def update_path(self):
         if self.path is None:
             params = self.astarsearch_solution('survivalrate', self.cur_pos)
             if params.has_path:
                 self.cur_pos = params.path[1]
         else:
-            self.cur_pos = self.path[path_cnt]
+            index = self.path.index(self.cur_pos)
+            if index + 1 >= len(self.path):
+                self.cur_pos = (self.dim - 1, 0)
+                return
+            self.cur_pos = self.path[index + 1]
             return
 
-    def path_choosing(self, cur_x, cur_y, path):
+    def path_choosing(self, path):
         # valid: in the range, no obstruction
         local_weight = []
+        (cur_x, cur_y) = self.cur_pos
         for nodes in self.get_valid(cur_x, cur_y, path):
             (x, y) = nodes
-            local_weight.append(self.weight[x][y])
+            local_weight.append(pow(self.weight[x][y], self.alpha) * pow(self.heuristic[x][y], self.beta))
         x = random.uniform(0, sum(local_weight))
+        if sum(local_weight) == 0:
+            return False
         cumulative_weight = 0.0
-        (xx, yy) = (0,0)
+        (xx, yy) = (0, 0)
         for node in self.get_valid(cur_x, cur_y, path):
             (xx, yy) = node
-            cumulative_weight += self.weight[xx][yy]
+            cumulative_weight += pow(self.weight[xx][yy], self.alpha) * pow(self.heuristic[xx][yy], self.beta)
             if x < cumulative_weight:
                 break
         return xx, yy
@@ -105,42 +115,64 @@ class MazeState(Maze):
     def aco(self):
         # initialize
         origin_env = deepcopy(self.env)
-        self.weight = [[(1 / 2 * self.dim) for col in range(self.dim)] for row in range(self.dim)]
-        for i in range(self.iter_time):
-            tmp_weight = []
-            self.env = origin_env
+        print(origin_env)
+        p = self.solve('bfs').path
+        self.weight = [[(1 / 4 * self.dim) for col in range(self.dim)] for row in range(self.dim)]
+        self.heuristic = [[1 / (self.hf_manhattan((row, col), (self.dim - 1, self.dim - 1)) + 1)for col in range(self.dim)] for row in range(self.dim)]
+        for node in p:
+            (xx, yy) = node
+            self.weight[xx][yy] = 1 / len(p)
+        for ii in range(self.iter_time):
+            print("iter:", ii)
+            tmp_weight = self.weight
             for j in range(self.ant_num):
+                self.env = deepcopy(origin_env)
                 tmp_path = [(0, 0)]
-                (cur_x, cur_y) = tmp_path[-1]
+                self.cur_pos = (0, 0)
                 while True:
-                    if cur_x == self.dim - 1 and cur_y == self.dim - 1:
+                    # for kk in range(self.dim):
+                    #     print(self.env[kk])
+                    # print(self.cur_pos)
+                    # print(tmp_path)
+                    # print("--------------------")
+
+                    if self.cur_pos == (self.dim - 1, self.dim - 1):
                         # break out
-                        status = 'win'
+                        status_ = 'win'
                         break
-                    if self.path_choosing(cur_x, cur_y, tmp_path) is not False:
-                        (cur_x, cur_y) = self.path_choosing(cur_x, cur_y, tmp_path)
-                        tmp_path.append(deepcopy((cur_x, cur_y)))
+                    if self.path_choosing(tmp_path) is not False:
+                        self.cur_pos = self.path_choosing(tmp_path)
+                        tmp_path.append(deepcopy(self.cur_pos))
                     else:
                         # no path to take
-                        status = 'die'
+                        status_ = 'die'
                         break
                     self.update_maze()
+                    (cur_x, cur_y) = self.cur_pos
                     if self.env[cur_x][cur_y] == -1:
                         # die
-                        status = 'die'
+                        status_ = 'die'
                         break
-                if status == 'win':
+                if status_ == 'win':
                     for t in range(len(tmp_path)):
                         (x, y) = tmp_path[t]
                         tmp_weight[x][y] += 1 / len(tmp_path)
-            self.weight = [[tmp_weight[row][col] * self.alpha for col in range(self.dim)] for row in range(self.dim)]
+            self.weight = [[tmp_weight[row][col] * self.rou for col in range(self.dim)] for row in range(self.dim)]
         # generate solution
-        self.env = origin_env
-        solution = [(0, 0)]
-        (new_x, new_y) = (0, 0)
-        while solution[-1] != (self.dim - 1, self.dim - 1):
-            (new_x, new_y) = self.path_choosing(new_x, new_y, solution)
-            solution.append(deepcopy((new_x, new_y)))
+        success = False
+        while not success:
+            self.env = deepcopy(origin_env)
+            solution = [(0, 0)]
+            self.cur_pos = (0, 0)
+            success = True
+            while solution[-1] != (self.dim - 1, self.dim - 1):
+                if self.path_choosing(solution) is False:
+                    print("No Path")
+                    success = False
+                    break
+                self.cur_pos = self.path_choosing(solution)
+                solution.append(deepcopy(self.cur_pos))
+            self.cur_pos = (0, 0)
         return solution
 
     def generate_path(self, alg):
@@ -161,10 +193,10 @@ class MazeState(Maze):
 
 
 def experiment(maze_state):
-    path_cnt = 0
+    maze_state.cur_pos = (0, 0)
     while True:
         # print('updating')
-        maze_state.update_path(path_cnt)
+        maze_state.update_path()
         maze_state.update_maze()
         # print(maze_state.cur_pos)
         (cur_x, cur_y) = maze_state.cur_pos
@@ -172,7 +204,6 @@ def experiment(maze_state):
             return False
         if maze_state.cur_pos == (maze_state.dim - 1, maze_state.dim - 1):
             return True
-        path_cnt += 1
     return False
 
 
@@ -191,8 +222,9 @@ if __name__ == "__main__":
     # print(count/1000)
 
     count = 0
+    init_state = MazeState(0.2, 20, 0.01)
+    init_state.generate_path('aco')
     for i in range(100):
-        init_state = MazeState(0.2, 30, 0.08)
         status = experiment(init_state)
         print(i, status, init_state.cur_pos, init_state.get_fire_num())
         if status:
