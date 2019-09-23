@@ -26,6 +26,7 @@ class MazeState(Maze):
         # if useless after calculating suviral rate, just count k here
         res = []
         # valid: in the range, no obstruction
+        # used by survival rate calculation and weight solution
         if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0:
             res.append((cur_x + 1, cur_y))
         if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0:
@@ -51,6 +52,15 @@ class MazeState(Maze):
             if self.env[xx][yy] == -1:
                 k += 1
         return pow((1 - self.fla_rate), k)
+
+    def weight_solution(self):
+        w1, w2 = 0, 0
+        (cur_x, cur_y) = self.cur_pos
+        neighbors = self.get_valid_neighbors(cur_x, cur_y)
+        weights = {}
+        for node in neighbors:
+            weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
+        return max(weights, key = weights.get)
 
     def update_path(self):
         params = self.astarsearch_solution('survivalrate', self.cur_pos)
