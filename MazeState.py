@@ -13,9 +13,10 @@ class MazeState(Maze):
         self.iter_time = 1000
         self.weight = []
         self.alpha = 0.1
+        self.path = None
 
         self.re_init_check()
-        self.env[0][self.dim - 1] = -1  # set fire after reinitialization check
+        self.env[0][self.dim - 1] = -1  # set fire after reinitialize check
 
     def re_init_check(self):
         # a better way is to add start and end node in search methods, but deepcopy is more convenient in coding
@@ -33,22 +34,21 @@ class MazeState(Maze):
         for row in range(self.dim):
             for col in range(self.dim):
                 node1 = (row, col)
-                # print(node1, self.hf_survivalrate((row, col)))
                 if self.env[row][col] == 0 and p > self.hf_survivalrate((row, col)):
                     self.env[row][col] = -1
 
     def get_valid_neighbors(self, cur_x, cur_y):
         # if useless after calculating suviral rate, just count k here
         res = []
-        # valid: in the range, no obstruction, may be on fire
+        # valid: in the range, no obstruction, no fire
         # used by survival rate calculation and weight solution
-        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] != 1:
+        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0:
             res.append((cur_x + 1, cur_y))
-        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] != 1:
+        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0:
             res.append((cur_x, cur_y + 1))
-        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] != 1:
+        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0:
             res.append((cur_x - 1, cur_y))
-        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] != 1:
+        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0:
             res.append((cur_x, cur_y - 1))
         return res
 
@@ -77,11 +77,14 @@ class MazeState(Maze):
             weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
         return max(weights, key = weights.get)
 
-    def update_path(self):
-        params = self.astarsearch_solution('survivalrate', self.cur_pos)
-        if params.has_path:
-            self.cur_pos = params.path[1]
-        return
+    def update_path(self, path_cnt):
+        if self.path is None:
+            params = self.astarsearch_solution('survivalrate', self.cur_pos)
+            if params.has_path:
+                self.cur_pos = params.path[1]
+        else:
+            self.cur_pos = self.path(path_cnt)
+            return
 
     def path_choosing(self, cur_x, cur_y, path):
         # valid: in the range, no obstruction
@@ -91,11 +94,13 @@ class MazeState(Maze):
             local_weight.append(self.weight[x][y])
         x = random.uniform(0, sum(local_weight))
         cumulative_weight = 0.0
+        (xx, yy) = (0,0)
         for node in self.get_valid(cur_x, cur_y, path):
             (xx, yy) = node
             cumulative_weight += self.weight[xx][yy]
             if x < cumulative_weight:
-                return node
+                break
+        return xx, yy
 
     def aco(self):
         # initialize
@@ -138,18 +143,20 @@ class MazeState(Maze):
             solution.append(deepcopy((new_x, new_y)))
         return solution
 
-    def get_fire_num(self):
-        count = 0
-        for i in range(self.dim):
-            for j in range(self.dim):
-                if self.env[i][j] == -1:
-                    count += 1
-        return count
+    def generate_path(self, alg):
+        if alg is None:
+            return
+        if alg == 'aco':
+            self.path = self.aco()
+        else:
+            self.path = self.solve(alg)
+
 
 def experiment(maze_state):
-    while True :
+    path_cnt = 0
+    while True:
         # print('updating')
-        maze_state.update_path()
+        maze_state.update_path(path_cnt)
         maze_state.update_maze()
         # print(maze_state.cur_pos)
         (cur_x, cur_y) = maze_state.cur_pos
@@ -157,23 +164,20 @@ def experiment(maze_state):
             return False
         if maze_state.cur_pos == (maze_state.dim - 1, maze_state.dim - 1):
             return True
+        path_cnt += 1
     return False
-
-
 
 
     #update
 
 if __name__ == "__main__":
-    # count = 0
-    # for i in range(1000):
-    #     init_state = MazeState(0.2, 30, 0.2)
-    #     status = experiment(init_state)
-    #     print(i, status)
-    #     if status:
-    #     # if experiment(init_state):
-    #         count += 1
-    # print(count/1000)
-
-    init_state = MazeState(0.2, 30, 0.5)
-    print(experiment(init_state))
+    count = 0
+    for i in range(1000):
+        init_state = MazeState(0.2, 30, 0.2)
+        init_state.generate_path('dfs')
+        status = experiment(init_state)
+        print(i, status)
+        if status:
+        # if experiment(init_state):
+            count += 1
+    print(count/1000)
