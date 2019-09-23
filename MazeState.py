@@ -1,6 +1,7 @@
 from Maze import *
 from copy import deepcopy
 import random
+import numpy as np
 
 class MazeState(Maze):
     def __init__(self, p, d, q):
@@ -20,10 +21,10 @@ class MazeState(Maze):
         # a better way is to add start and end node in search methods, but deepcopy is more convenient in coding
         self_reverse = deepcopy(self)
         for row in range(self_reverse.dim):
-            self_reverse.env[row] = reversed(self_reverse.env[row])
+            self_reverse.env[row] = list(reversed(self_reverse.env[row]))
         while self.solve("dfs").has_path is False or self_reverse.solve('dfs').has_path is False:
             print('reinit')
-            self = MazeState(self.occ_rate, self.dim, self.fla_rate)
+            self.env = [[np.random.binomial(1, self.occ_rate) for col in range(self.dim)] for row in range(self.dim)]
 
     def update_maze(self):
         p = random.random()
@@ -153,5 +154,5 @@ def experiment(maze_state):
     #update
 
 if __name__ == "__main__":
-    init_state = MazeState(0.2, 30, 0.2)
-    experiment(init_state)
+    init_state = MazeState(0.3, 30, 0.2)
+    print(experiment(init_state))
