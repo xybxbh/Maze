@@ -40,15 +40,15 @@ class MazeState(Maze):
     def get_valid_neighbors(self, cur_x, cur_y):
         # if useless after calculating suviral rate, just count k here
         res = []
-        # valid: in the range, no obstruction, no fire
+        # valid: in the range, no obstruction, may be on fire
         # used by survival rate calculation and weight solution
-        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0:
+        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] != 1:
             res.append((cur_x + 1, cur_y))
-        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0:
+        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] != 1:
             res.append((cur_x, cur_y + 1))
-        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0:
+        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] != 1:
             res.append((cur_x - 1, cur_y))
-        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0:
+        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] != 1:
             res.append((cur_x, cur_y - 1))
         return res
 
@@ -151,6 +151,14 @@ class MazeState(Maze):
         else:
             self.path = self.solve(alg).path
 
+    def get_fire_num(self): # for test stdout
+        count = 0
+        for i in range(self.dim):
+            for j in range(self.dim):
+                if self.env[i][j] == -1:
+                    count += 1
+        return count
+
 
 def experiment(maze_state):
     path_cnt = 0
@@ -171,13 +179,26 @@ def experiment(maze_state):
     #update
 
 if __name__ == "__main__":
+    # count = 0
+    # for i in range(1000):
+    #     init_state = MazeState(0.2, 30, 0.2)
+    #     init_state.generate_path('dfs')
+    #     status = experiment(init_state)
+    #     print(i, status)
+    #     if status:
+    #     # if experiment(init_state):
+    #         count += 1
+    # print(count/1000)
+
     count = 0
-    for i in range(1000):
-        init_state = MazeState(0.2, 30, 0.2)
-        init_state.generate_path('dfs')
+    for i in range(100):
+        init_state = MazeState(0.2, 30, 0.08)
         status = experiment(init_state)
-        print(i, status)
+        print(i, status, init_state.cur_pos, init_state.get_fire_num())
         if status:
         # if experiment(init_state):
             count += 1
-    print(count/1000)
+    print(count/100)
+
+    # init_state = MazeState(0.2, 30, 0.5)
+    # print(experiment(init_state))
