@@ -8,13 +8,11 @@ class MazeState(Maze):
         self.cur_pos = (0, 0)
         self.fla_rate = q
         self.env[0][self.dim - 1] = -1
-        self.flammability = 0.1
 
         self.ant_num = 1000
         self.iter_time = 1000
         self.weight = []
         self.alpha = 0.1
-
 
     def update_maze(self):
         p = random.random()
@@ -22,24 +20,6 @@ class MazeState(Maze):
             for col in range(self.dim):
                 node1 = (row, col)
                 if self.env[row][col] == 0 and p > self.hf_survivalrate((row, col)):
-                    self.env[row][col] = -1
-
-    def fire_spreading(self):
-        for row in range(self.dim):
-            for col in range(self.dim):
-                if self.env[row][col] == -1 or self.env[row][col] == 1:
-                    break
-                flaming_neighbors = 0
-                if row + 1 < self.dim and self.env[row + 1][col] == -1:
-                    flaming_neighbors += 1
-                if col + 1 < self.dim and self.env[row][col + 1] == -1:
-                    flaming_neighbors += 1
-                if row - 1 < self.dim and self.env[row - 1][col] == -1:
-                    flaming_neighbors += 1
-                if col - 1 < self.dim and self.env[row][col - 1] == -1:
-                    flaming_neighbors += 1
-                flaming_rate = 1 - pow(1 - self.flammability, flaming_neighbors)
-                if flaming_rate >= random.uniform(0, 1):
                     self.env[row][col] = -1
 
     def get_valid_neighbors(self, cur_x, cur_y):
@@ -80,31 +60,17 @@ class MazeState(Maze):
 
     def path_choosing(self, cur_x, cur_y, path):
         # valid: in the range, no obstruction
-        total_weight = 0
-        local_weight = [0, 0, 0, 0]
-        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
-            local_weight[0] = self.weight[cur_x + 1][cur_y]
-        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
-            local_weight[1] = self.weight[cur_x][cur_y + 1]
-        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
-            local_weight[2] = self.weight[cur_x - 1][cur_y]
-        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
-            local_weight[3] = self.weight[cur_x][cur_y - 1]
+        local_weight = []
+        for nodes in self.get_valid(cur_x, cur_y, path):
+            (x, y) = nodes
+            local_weight.append(self.weight[x][y])
         x = random.uniform(0, sum(local_weight))
-        if sum(local_weight) == 0:
-            return False
-        total_weight += local_weight[0]
-        if total_weight >= x:
-            return cur_x + 1, cur_y
-        total_weight += local_weight[1]
-        if total_weight >= x:
-            return cur_x, cur_y + 1
-        total_weight += local_weight[2]
-        if total_weight >= x:
-            return cur_x - 1, cur_y
-        total_weight += local_weight[3]
-        if total_weight >= x:
-            return cur_x, cur_y - 1
+        cumulative_weight = 0.0
+        for node in self.get_valid(cur_x, cur_y, path):
+            (xx, yy) = node
+            cumulative_weight += self.weight[xx][yy]
+            if x < cumulative_weight:
+                return node
 
     def aco(self):
         # initialize
@@ -128,7 +94,7 @@ class MazeState(Maze):
                         # no path to take
                         status = 'die'
                         break
-                    self.fire_spreading()
+                    self.update_maze()
                     if self.env[cur_x][cur_y] == -1:
                         # die
                         status = 'die'
@@ -168,4 +134,3 @@ def experiment(maze_state):
 if __name__ == "__main__":
     init_state = MazeState(0.2, 30, 0.2)
     experiment(init_state)
-    
