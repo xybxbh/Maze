@@ -23,9 +23,6 @@ class LocalSearch(object):
         self.breed_cnt = 1000
         self.mutant_rate = 0.6
 
-    def gen_ini_maze(self):
-        self.ori_maze = ori_maze
-
 
     def update_maze_param(self, maze):
         self.cur_maze = maze
@@ -155,13 +152,15 @@ class LocalSearch(object):
                 return False
         return new_maze
 
-    def comparator(self, alg, maze):
+    def comparator(self, alg, param, maze):
         params_new = maze.solve(alg)
         params_cur = self.cur_maze.solve(alg)
-        if alg == 'dfs':
+        if param == "max_fringe_size":
             return params_new.max_fringe_size - params_cur.max_fringe_size
-        elif alg == "a*":
-            return params_new.max_nodes_expanded - params_cur.max_nodes_expaned
+        elif param == "total_nodes_expanded":
+            return len(params_new.nodes_expanded) - len(params_cur.max_nodes_expaned)
+        elif param == "total_path_length":
+            return len(params_new.path) - len(params_cur.path)
         return False
 
     def simulated_annealing(self, alg):
@@ -171,32 +170,35 @@ class LocalSearch(object):
             if not new_maze.solve(alg).has_path:
                 continue
             p = random.random()
-            comparator = self.comparator(alg, new_maze)
+            comparator = self.comparator(alg, "max_fringe_size", new_maze)
             p_sa = 1 / (1 + math.exp(0 - comparator / self.sa_tem)) if (0 - comparator / self.sa_tem) < 500 else 0
             if comparator > 0 or p < p_sa:
                 self.update_maze_param(new_maze)
                 print('comparator =', comparator)
-                print(self.get_search_condition(alg, self.cur_maze.solve(alg)))
+                print(self.get_search_condition(alg, "max_fringe_size", self.cur_maze.solve(alg)))
                 print(len(self.cur_maze.solve(alg).path))
             self.sa_tem = self.sa_tem * self.sa_delta
             # print('t =', self.sa_tem)
 
-    def get_search_condition(self, alg, path_result_param):
-        if alg == "dfs":
-            return path_result_param.max_fringe_size
-        elif alg == "a*":
-            return path_result_param.max_nodes_expanded
+    def get_search_condition(self, param_name, solution_param):
+        if param_name == "max_fringe_size":
+            return solution_param.max_fringe_size
+        elif param_name == "total_nodes_expanded":
+            return len(solution_param.nodes_expanded)
+        elif param_name == "total_path_length":
+            return len(solution_param.path)
+        return False
 
     def gen_ini_maze_bs(self, alg, m):
         ini_maze_list = queue.PriorityQueue()
         index = 0
         for i in range(0, m):
             maze = Maze(self.ori_maze.occ_rate, self.ori_maze.dim)
-            path_result_param = maze.solve(alg)
-            while path_result_param.has_path == False:
+            solution_param = maze.solve(alg)
+            while solution_param.has_path == False:
                 maze = Maze(self.ori_maze.occ_rate, self.ori_maze.dim)
-                path_result_param = maze.solve(alg)
-            ini_maze_list.put((-self.get_search_condition(alg, path_result_param), index, maze))
+                solution_param = maze.solve(alg)
+            ini_maze_list.put((-self.get_search_condition(alg, "total_nodes_expanded", solution_param), index, maze))
             index += 1
         print("ini_finished")
         return (ini_maze_list, index)
@@ -221,7 +223,7 @@ class LocalSearch(object):
                     new_maze = self.gen_maze4(cur_maze, beam_search_iter)
                     if new_maze:
                         new_path_param = new_maze.solve(alg)
-                        if self.get_search_condition(alg, new_path_param) <= -cur_max_condition:
+                        if self.get_search_condition(alg, "total_nodes_expanded", new_path_param) <= -cur_max_condition:
                             continue
                         temp_maze_list.put((-self.get_search_condition(alg, new_path_param), index, new_maze))
                         index += 1
@@ -263,7 +265,7 @@ class LocalSearch(object):
                 return params_m.max_fringe_size
             elif alg == 'a*':
                 params_m = m.solve(alg)
-                return params_m.max_nodes_expanded
+                return params_m.nodes_expanded
             else:
                 print("Only support dfs and a*")
 
