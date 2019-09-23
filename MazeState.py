@@ -15,7 +15,7 @@ class MazeState(Maze):
         self.alpha = 0.1
 
         self.re_init_check()
-        self.env[0][self.dim - 1] = -1  # set fire after reinitialize check
+        self.env[0][self.dim - 1] = -1  # set fire after reinitialization check
 
     def re_init_check(self):
         # a better way is to add start and end node in search methods, but deepcopy is more convenient in coding
@@ -33,21 +33,22 @@ class MazeState(Maze):
         for row in range(self.dim):
             for col in range(self.dim):
                 node1 = (row, col)
+                # print(node1, self.hf_survivalrate((row, col)))
                 if self.env[row][col] == 0 and p > self.hf_survivalrate((row, col)):
                     self.env[row][col] = -1
 
     def get_valid_neighbors(self, cur_x, cur_y):
         # if useless after calculating suviral rate, just count k here
         res = []
-        # valid: in the range, no obstruction, no fire
+        # valid: in the range, no obstruction, may be on fire
         # used by survival rate calculation and weight solution
-        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0:
+        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] != 1:
             res.append((cur_x + 1, cur_y))
-        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0:
+        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] != 1:
             res.append((cur_x, cur_y + 1))
-        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0:
+        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] != 1:
             res.append((cur_x - 1, cur_y))
-        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0:
+        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] != 1:
             res.append((cur_x, cur_y - 1))
         return res
 
@@ -137,6 +138,14 @@ class MazeState(Maze):
             solution.append(deepcopy((new_x, new_y)))
         return solution
 
+    def get_fire_num(self):
+        count = 0
+        for i in range(self.dim):
+            for j in range(self.dim):
+                if self.env[i][j] == -1:
+                    count += 1
+        return count
+
 def experiment(maze_state):
     while True :
         # print('updating')
@@ -156,12 +165,15 @@ def experiment(maze_state):
     #update
 
 if __name__ == "__main__":
-    count = 0
-    for i in range(1000):
-        init_state = MazeState(0.2, 30, 0.2)
-        status = experiment(init_state)
-        print(i, status)
-        if status:
-        # if experiment(init_state):
-            count += 1
-    print(count/1000)
+    # count = 0
+    # for i in range(1000):
+    #     init_state = MazeState(0.2, 30, 0.2)
+    #     status = experiment(init_state)
+    #     print(i, status)
+    #     if status:
+    #     # if experiment(init_state):
+    #         count += 1
+    # print(count/1000)
+
+    init_state = MazeState(0.2, 30, 0.5)
+    print(experiment(init_state))
