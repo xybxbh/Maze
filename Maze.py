@@ -175,7 +175,8 @@ class Maze(object):
             path_list1.pop()
             visited_s.remove(list(set(visited_s).intersection(set(visited_g)))[0])
             node_visited = (visited_s + visited_g)
-            return solution_params.put(True, path_list1 + path_list2, 0, node_visited)
+            solution_params.put(True, path_list1 + path_list2, 0, node_visited)
+            return solution_params
         else:
             return solution_params
 
@@ -212,7 +213,7 @@ class Maze(object):
             (total_estCost, alr_cost, (cur_x, cur_y)) = fringe.get()
             if (cur_x, cur_y) == goal:
                 # print(self.backtrace(path, start))
-                solution_params.aStar(True, self.backtrace(path, start), nodes_expanded)
+                solution_params.put(True, self.backtrace(path, start), max_fringe_size, nodes_expanded)
                 return solution_params
             nodes_expanded.append((cur_x, cur_y))
             res = self.get_valid(cur_x, cur_y, path)
