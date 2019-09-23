@@ -7,18 +7,14 @@ import matplotlib.pyplot as plt
 
 class Maze(object):
     class SolutionParams(object):
-        def __init__(self, has_path):
+        def __init__(self, has_path = False):
             self.has_path = has_path
 
-        def dfs(self, has_path, path, max_fringe_size):
+        def put(self, has_path, path, max_fringe_size, nodes_expanded):
             self.has_path = has_path
             self.path = path
             self.max_fringe_size = max_fringe_size
-
-        def aStar(self, has_path, path, max_nodes_expanded):
-            self.has_path = has_path
-            self.path = path
-            self.max_nodes_expanded = max_nodes_expanded
+            self.nodes_expanded = nodes_expanded
 
     def __init__(self, p, d, import_m=None):
         if import_m:
@@ -27,9 +23,8 @@ class Maze(object):
         else:
             self.occ_rate = p
             self.dim = d
-            # self.env = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
-            self.env = [[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
-            # self.env = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+            self.env = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
+            # self.env = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
             self.env[0][0] = 0
             self.env[d - 1][d - 1] = 0
 
@@ -57,29 +52,17 @@ class Maze(object):
     def bfs_solution(self):
         fringe = deque([(0, 0)])
         path = {}
-        while fringe:
-            (cur_x, cur_y) = fringe.popleft()
-            if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                return self.backtrace(path, (0, 0))
-            res = self.get_valid(cur_x, cur_y, path)
-            if res:
-                for node in res:
-                    path[node] = (cur_x, cur_y)
-                    fringe.append(node)
-        return False
-
-    def dfs_solution(self):  # return hasPath: bool; path: list; max_fringe_size: int
-        fringe = [(0, 0)]
-        path = {}
         max_fringe_size = 1
-        solution_params = self.SolutionParams(False)
+        nodes_expanded = []
+        solution_params = self.SolutionParams()
         while fringe:
             if len(fringe) > max_fringe_size:
                 max_fringe_size = len(fringe)
-            (cur_x, cur_y) = fringe.pop()
+            (cur_x, cur_y) = fringe.popleft()
             if cur_x == self.dim - 1 and cur_y == self.dim - 1:
-                solution_params.dfs(True, self.backtrace(path, (0, 0)), max_fringe_size)
+                solution_params.put(True, self.backtrace(path, (0, 0)), max_fringe_size, nodes_expanded)
                 return solution_params
+            nodes_expanded.append((cur_x, cur_y))
             res = self.get_valid(cur_x, cur_y, path)
             if res:
                 for node in res:
@@ -87,7 +70,28 @@ class Maze(object):
                     fringe.append(node)
         return solution_params
 
-    def bd_dfs_solution(self):
+    def dfs_solution(self):  # return hasPath: bool; path: list; max_fringe_size: int
+        fringe = [(0, 0)]
+        path = {}
+        max_fringe_size = 1
+        nodes_expanded = []
+        solution_params = self.SolutionParams()
+        while fringe:
+            if len(fringe) > max_fringe_size:
+                max_fringe_size = len(fringe)
+            (cur_x, cur_y) = fringe.pop()
+            if cur_x == self.dim - 1 and cur_y == self.dim - 1:
+                solution_params.put(True, self.backtrace(path, (0, 0)), max_fringe_size, nodes_expanded)
+                return solution_params
+            nodes_expanded.append((cur_x, cur_y))
+            res = self.get_valid(cur_x, cur_y, path)
+            if res:
+                for node in res:
+                    path[node] = (cur_x, cur_y)
+                    fringe.append(node)
+        return solution_params
+
+    def bd_bfs_solution(self):
         fringe_s = [(0, 0)]
         fringe_g = [(self.dim - 1, self.dim - 1)]
         path_s = {}
@@ -97,6 +101,7 @@ class Maze(object):
         finish = False
         path_s[(0, 0)] = (0, 0)
         path_g[(self.dim - 1, self.dim - 1)] = (self.dim - 1, self.dim - 1)
+        solution_params = self.SolutionParams()
         while fringe_s and fringe_g:
             (cur_x_s, cur_y_s) = fringe_s.pop()
             (cur_x_g, cur_y_g) = fringe_g.pop()
@@ -168,9 +173,11 @@ class Maze(object):
             while path_list2[-1] != (self.dim - 1, self.dim - 1):
                 path_list2.append(path_g[path_list2[-1]])
             path_list1.pop()
-            return path_list1 + path_list2
+            visited_s.remove(list(set(visited_s).intersection(set(visited_g)))[0])
+            node_visited = (visited_s + visited_g)
+            return solution_params.put(True, path_list1 + path_list2, 0, node_visited)
         else:
-            return False
+            return solution_params
 
     @staticmethod
     def hf_manhattan(node1, node2):
@@ -196,15 +203,18 @@ class Maze(object):
         fringe.put((0, 0, start))
         path = {}
         goal = (self.dim - 1, self.dim - 1)
-        max_nodes_expanded = 0
+        max_fringe_size = 1
+        nodes_expanded = []
         solution_params = self.SolutionParams(False)
         while not fringe.empty():
+            if len(fringe) > max_fringe_size:
+                max_fringe_size = len(fringe)
             (total_estCost, alr_cost, (cur_x, cur_y)) = fringe.get()
             if (cur_x, cur_y) == goal:
                 # print(self.backtrace(path, start))
-                solution_params.aStar(True, self.backtrace(path, start), max_nodes_expanded)
+                solution_params.aStar(True, self.backtrace(path, start), nodes_expanded)
                 return solution_params
-            max_nodes_expanded += 1
+            nodes_expanded.append((cur_x, cur_y))
             res = self.get_valid(cur_x, cur_y, path)
             if res:
                 for node in res:
@@ -219,81 +229,8 @@ class Maze(object):
         elif alg == "bfs":
             return self.bfs_solution()
         elif alg == "bdbfs":
-            return self.bd_dfs_solution()
+            return self.bd_bfs_solution()
         elif alg == "a*":
             return self.astarsearch_solution(heuristicFunction, start)
         else:
             return False
-
-
-class TestMaze(object):
-
-    def __init__(self, p, d, input_maze=None):
-        self.maze = Maze(p, d, input_maze)
-        # self.test_init()
-        # self.test_bfs()
-        # self.test_dfs()
-        self.test_astarManh()
-        # self.test_astarEucl()
-        # self.test_bddfs()
-
-    def test_init(self):
-        print(self.maze.env)
-
-    def test_dfs(self):
-        param = self.maze.dfs_solution()
-        if param.has_path:
-            print(param.path)
-            self.printGraph(param.path)
-        else:
-            self.printGraph(param.has_path)
-
-    def test_bfs(self):
-        path = self.maze.bfs_solution()
-        self.printGraph(path)
-
-    def test_bddfs(self):
-        path = self.maze.bd_dfs_solution()
-        self.printGraph(path)
-
-    def test_astarEucl(self):
-        path = self.maze.astarsearch_solution("Euclidean")
-        self.printGraph(path)
-
-    def test_astarManh(self):
-        path1 = self.maze.solve("a*")
-        print(path1.max_nodes_expaned)
-        self.printGraph(path1.path)
-
-    def printGraph(self, path):
-        print(path)
-        plt.xlim(0, self.maze.dim)
-        plt.ylim(0, self.maze.dim)
-        plt.xticks(range(0, self.maze.dim, 1))
-        plt.yticks(range(0, self.maze.dim, 1))
-        plt.grid(True, linestyle="-", color="black", linewidth="0.5")
-        axes = plt.gca()
-        axes.tick_params(left=False, bottom=False, labelbottom=False, labelleft=False)
-
-        data = np.array(self.maze.env)
-        rows, cols = data.shape
-
-        axeslist_x = []
-        axeslist_y = []
-
-        if path == False:
-            plt.title("NO SOLUTION")
-        else:
-            for t in path:
-                (y, x) = t
-                axeslist_x.append(x + 0.5)
-                axeslist_y.append(self.maze.dim - y - 0.5)
-            plt.plot(axeslist_x, axeslist_y, c="red")
-        plt.imshow(data, cmap='gray_r', extent=[0, cols, 0, rows])
-
-        plt.show()
-
-
-if __name__ == "__main__":
-    TestMaze(0.2, 30)
-
