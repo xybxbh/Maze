@@ -25,6 +25,8 @@ class MazeState(Maze):
         while self.solve("dfs").has_path is False or self_reverse.solve('dfs').has_path is False:
             print('reinit')
             self.env = [[np.random.binomial(1, self.occ_rate) for col in range(self.dim)] for row in range(self.dim)]
+            for row in range(self_reverse.dim):
+                self_reverse.env[row] = list(reversed(self.env[row]))
 
     def update_maze(self):
         p = random.random()
@@ -37,7 +39,7 @@ class MazeState(Maze):
     def get_valid_neighbors(self, cur_x, cur_y):
         # if useless after calculating suviral rate, just count k here
         res = []
-        # valid: in the range, no obstruction
+        # valid: in the range, no obstruction, no fire
         # used by survival rate calculation and weight solution
         if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0:
             res.append((cur_x + 1, cur_y))
@@ -51,7 +53,7 @@ class MazeState(Maze):
 
     def hf_choose(self, function, node1, node2):
         if function == "survivalrate":
-            w1, w2 = 0, 0
+            w1, w2 = 10, 1
             return self.hf_survivalrate(node1)*w1 + self.hf_manhattan(node1, node2)*w2
         return False
 
@@ -137,10 +139,10 @@ class MazeState(Maze):
 
 def experiment(maze_state):
     while True :
-        print('updating')
+        # print('updating')
         maze_state.update_path()
         maze_state.update_maze()
-        print(maze_state.cur_pos)
+        # print(maze_state.cur_pos)
         (cur_x, cur_y) = maze_state.cur_pos
         if maze_state.env[cur_x][cur_y] == -1:
             return False
@@ -154,5 +156,12 @@ def experiment(maze_state):
     #update
 
 if __name__ == "__main__":
-    init_state = MazeState(0.3, 30, 0.2)
-    print(experiment(init_state))
+    count = 0
+    for i in range(1000):
+        init_state = MazeState(0.2, 30, 0.2)
+        status = experiment(init_state)
+        print(i, status)
+        if status:
+        # if experiment(init_state):
+            count += 1
+    print(count/1000)
