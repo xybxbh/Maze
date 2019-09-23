@@ -207,8 +207,8 @@ class Maze(object):
         nodes_expanded = []
         solution_params = self.SolutionParams(False)
         while not fringe.empty():
-            if len(fringe) > max_fringe_size:
-                max_fringe_size = len(fringe)
+            if fringe.qsize() > max_fringe_size:
+                max_fringe_size = fringe.qsize()
             (total_estCost, alr_cost, (cur_x, cur_y)) = fringe.get()
             if (cur_x, cur_y) == goal:
                 # print(self.backtrace(path, start))
