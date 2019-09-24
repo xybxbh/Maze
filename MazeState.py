@@ -16,7 +16,7 @@ class MazeState(Maze):
         self.alpha = 1
         self.beta = 1
         self.rou = 1
-        self.path = None
+        self.path = [(0, 0)]
 
         self.re_init_check()
         self.env[0][self.dim - 1] = -1  # set fire after reinitialize check
@@ -34,10 +34,11 @@ class MazeState(Maze):
 
     def update_maze(self):
         p = random.random()
+        temp_maze = deepcopy(self)
         for row in range(self.dim):
             for col in range(self.dim):
                 node1 = (row, col)
-                if self.env[row][col] == 0 and p > self.hf_survivalrate((row, col)):
+                if self.env[row][col] == 0 and p > temp_maze.hf_survivalrate((row, col)):
                     self.env[row][col] = -1
 
     def get_valid_neighbors(self, cur_x, cur_y):
@@ -57,12 +58,14 @@ class MazeState(Maze):
 
     def hf_choose(self, function, node1, node2):
         if function == "survivalrate":
-            w1, w2 = 10, 1
+            w1, w2 = 30, -1
             return self.hf_survivalrate(node1)*w1 + self.hf_manhattan(node1, node2)*w2
         return False
 
     def hf_survivalrate(self, node1):
         (x, y) = node1
+        if self.env[x][y] == -1:
+            return 0
         neighbors = self.get_valid_neighbors(x, y)
         k = 0
         for node in neighbors:
@@ -72,19 +75,51 @@ class MazeState(Maze):
         return pow((1 - self.fla_rate), k)
 
     def weight_solution(self):
-        w1, w2 = 0, 0
+        w1, w2 = 30, -1
         (cur_x, cur_y) = self.cur_pos
         neighbors = self.get_valid_neighbors(cur_x, cur_y)
         weights = {}
         for node in neighbors:
-            weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
+            if node not in self.path:
+                weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
+        if not weights:
+            for node in neighbors:
+                weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
         return max(weights, key=weights.get)
 
-    def update_path(self):
-        if self.path is None:
+    def weight_2step_solution(self):
+        (cur_x, cur_y) = self.cur_pos
+        neighbors = self.get_valid_neighbors(cur_x, cur_y)
+        weight_sur = {}
+        weight_dis = {}
+        for node in neighbors:  # cant be none
+            if node not in self.path:   # get_valid_neighbors is used by other methods, so here
+                weight_sur[node] = self.hf_survivalrate(node)
+                weight_dis[node] = self.hf_manhattan(node, (self.dim - 1, self.dim - 1))
+        if not weight_dis:
+            for node in neighbors:
+                weight_sur[node] = self.hf_survivalrate(node)
+                weight_dis[node] = self.hf_manhattan(node, (self.dim - 1, self.dim - 1))
+        if not weight_dis:
+            print('neighbors size', len(neighbors))
+        max_sur = [x for x, y in weight_sur.items() if y == max(weight_sur.values())]
+        min_dis = [x for x, y in weight_dis.items() if y == min(weight_dis.values())]
+        if len(min_dis) > 0:    # should be > 0
+            return random.sample(min_dis, 1)[0]
+        print('size'. len(neighbors), len(weight_dis), len(max_sur), len(min_dis))
+
+    def update_path(self, alg):
+        if alg == 'astar':
             params = self.astarsearch_solution('survivalrate', self.cur_pos)
             if params.has_path:
                 self.cur_pos = params.path[1]
+                self.path.append(self.cur_pos)
+        elif alg == 'weight':
+            self.cur_pos = self.weight_solution()
+            self.path.append(self.cur_pos)
+        elif alg == 'weight_2step':
+            self.cur_pos = self.weight_2step_solution()
+            self.path.append(self.cur_pos)
         else:
             index = self.path.index(self.cur_pos)
             if index + 1 >= len(self.path):
@@ -176,9 +211,13 @@ class MazeState(Maze):
         return solution
 
     def generate_path(self, alg):
-        if alg is None:
-            return
-        if alg == 'aco':
+        if alg == 'astar':
+            pass
+        elif alg == 'weight':
+            pass
+        elif alg == 'weight_2step':
+            pass
+        elif alg == 'aco':
             self.path = self.aco()
         else:
             self.path = self.solve(alg).path
@@ -192,11 +231,12 @@ class MazeState(Maze):
         return count
 
 
-def experiment(maze_state):
+def experiment(maze_state, sol):
     maze_state.cur_pos = (0, 0)
+    maze_state.generate_path(sol)
     while True:
         # print('updating')
-        maze_state.update_path()
+        maze_state.update_path(sol)
         maze_state.update_maze()
         # print(maze_state.cur_pos)
         (cur_x, cur_y) = maze_state.cur_pos
@@ -210,27 +250,25 @@ def experiment(maze_state):
     #update
 
 if __name__ == "__main__":
-    # count = 0
-    # for i in range(1000):
-    #     init_state = MazeState(0.2, 30, 0.2)
-    #     init_state.generate_path('dfs')
-    #     status = experiment(init_state)
-    #     print(i, status)
-    #     if status:
-    #     # if experiment(init_state):
-    #         count += 1
-    # print(count/1000)
-
     count = 0
-    init_state = MazeState(0.2, 20, 0.01)
-    init_state.generate_path('aco')
-    for i in range(100):
-        status = experiment(init_state)
+    for i in range(1000):
+        init_state = MazeState(0.2, 30, 0.5)
+        status = experiment(init_state, 'weight_2step')
         print(i, status, init_state.cur_pos, init_state.get_fire_num())
         if status:
         # if experiment(init_state):
             count += 1
-    print(count/100)
+    print(count/1000)
+
+    # count = 0
+    # init_state = MazeState(0.2, 20, 0.01)
+    # for i in range(100):
+    #     status = experiment(init_state, 'aoc')
+    #     print(i, status, init_state.cur_pos, init_state.get_fire_num())
+    #     if status:
+    #     # if experiment(init_state):
+    #         count += 1
+    # print(count/100)
 
     # init_state = MazeState(0.2, 30, 0.5)
     # print(experiment(init_state))
