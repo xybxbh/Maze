@@ -182,7 +182,6 @@ class Maze(object):
 
         if node_meet is not (0, 0):
             path_list1 = [node_meet]
-            print(path_list1)
             while path_list1[-1] != (0, 0):
                 path_list1.append(path_s[path_list1[-1]])
             path_list1.reverse()

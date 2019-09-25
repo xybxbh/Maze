@@ -118,5 +118,5 @@ class AnalysisMaze(object):
 if __name__ == "__main__":
     # a = AnalysisMaze(0.2, 100)
     # a.mazerunner()
-    a = AnalysisMaze(0.4, 100)
+    a = AnalysisMaze(0.5, 100)
     a.mazerunner(["bdbfs"])
