@@ -32,7 +32,7 @@ def printGraph(maze, path, extratext = False, extraparam = (0, [])):
             data[x][y] = 1
         string = "max fringe size: " + str(max_fringe_size) + "\npath length: " + str(len(path))
         plt.title(extratext)
-        plt.text(0, -4, string)
+        plt.text(0, maze.dim * (-0.15) + 2, string)
 
     # print(maze.env)
 
