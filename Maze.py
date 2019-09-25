@@ -150,7 +150,7 @@ class Maze(object):
                     node_expanded.append((cur_x_g - 1, cur_y_g))
                     visited_node[cur_x_g - 1][cur_y_g] = 1
                 else:
-                    node_meet = (cur_x_g, cur_y_g - 1)
+                    node_meet = (cur_x_g - 1, cur_y_g)
                     break
             if cur_y_g - 1 >= 0 and self.env[cur_x_g][cur_y_g - 1] == 0 and (cur_x_g, cur_y_g - 1) not in path_g:
                 path_g[(cur_x_g, cur_y_g - 1)] = (cur_x_g, cur_y_g)
@@ -159,7 +159,7 @@ class Maze(object):
                     node_expanded.append((cur_x_g, cur_y_g - 1))
                     visited_node[cur_x_g][cur_y_g - 1] = 1
                 else:
-                    node_meet = (cur_x_g - 1, cur_y_g)
+                    node_meet = (cur_x_g, cur_y_g - 1)
                     break
             if cur_x_g + 1 < self.dim and self.env[cur_x_g + 1][cur_y_g] == 0 and (cur_x_g + 1, cur_y_g) not in path_g:
                 path_g[(cur_x_g + 1, cur_y_g)] = (cur_x_g, cur_y_g)
@@ -182,6 +182,7 @@ class Maze(object):
 
         if node_meet is not (0, 0):
             path_list1 = [node_meet]
+            print(path_list1)
             while path_list1[-1] != (0, 0):
                 path_list1.append(path_s[path_list1[-1]])
             path_list1.reverse()
