@@ -20,14 +20,21 @@ def printGraph(maze, path, extratext = False, extraparam = (0, [])):
     axeslist_x = []
     axeslist_y = []
 
+
     if extratext:
         max_fringe_size, nodes_expaned = extraparam
+        for i in range(0, maze.dim):
+            for j in range(0, maze.dim):
+                if data[i][j] == 1:
+                    data[i][j] = 2
         for i in range(0, len(nodes_expaned)):
             x, y = nodes_expaned[i]
-            data[x][y] = 0.5
+            data[x][y] = 1
         string = "max fringe size: " + str(max_fringe_size) + "\npath length: " + str(len(path))
         plt.title(extratext)
-        plt.text(0, -7, string)
+        plt.text(0, -4, string)
+
+    # print(maze.env)
 
     if path == False:
         plt.title("NO SOLUTION")
