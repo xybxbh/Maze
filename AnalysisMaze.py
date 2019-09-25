@@ -71,6 +71,13 @@ class AnalysisMaze(object):
             else:
                 print("NO SOLUTION")
 
+    def mazerunner_single(self, alg):
+        self.maze = Maze(self.occ_rate, self.dim)
+        solution_param = self.get_solution_param(alg)
+        if solution_param.has_path:
+            printGraph(self.maze, solution_param.path)
+        else:
+            print("NO SOLUTION")
 
     def cal_solvability(self):
         p = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
@@ -120,5 +127,5 @@ class AnalysisMaze(object):
 if __name__ == "__main__":
     # a = AnalysisMaze(0.2, 100)
     # a.mazerunner()
-    a = AnalysisMaze(0.2, 50)
-    a.compare_heuristic()
+    a = AnalysisMaze(0.2, 100)
+    a.mazerunner_single("bdbfs")
