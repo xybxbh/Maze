@@ -92,90 +92,104 @@ class Maze(object):
         return solution_params
 
     def bd_bfs_solution(self):
-        fringe_s = [(0, 0)]
-        fringe_g = [(self.dim - 1, self.dim - 1)]
+        fringe_s = deque([(0, 0)])
+        fringe_g = deque([(self.dim - 1, self.dim - 1)])
         path_s = {}
         path_g = {}
-        visited_s = [(0, 0)]
-        visited_g = [(self.dim - 1, self.dim - 1)]
-        finish = False
+        visited_node = [[0 for col in range(self.dim)] for row in range(self.dim)]
+        node_expanded = []
+        node_meet = (0, 0)
         path_s[(0, 0)] = (0, 0)
         path_g[(self.dim - 1, self.dim - 1)] = (self.dim - 1, self.dim - 1)
         solution_params = self.SolutionParams()
         while fringe_s and fringe_g:
-            (cur_x_s, cur_y_s) = fringe_s.pop()
-            (cur_x_g, cur_y_g) = fringe_g.pop()
+            (cur_x_s, cur_y_s) = fringe_s.popleft()
+            (cur_x_g, cur_y_g) = fringe_g.popleft()
 
             if cur_x_s + 1 < self.dim and self.env[cur_x_s + 1][cur_y_s] == 0 and (cur_x_s + 1, cur_y_s) not in path_s:
                 path_s[(cur_x_s + 1, cur_y_s)] = (cur_x_s, cur_y_s)
-                fringe_s.append((cur_x_s + 1, cur_y_s))
-                visited_s.append((cur_x_s + 1, cur_y_s))
-                if list(set(visited_s).intersection(set(visited_g))):
-                    finish = True
-                    break
-            if cur_x_s - 1 >= 0 and self.env[cur_x_s - 1][cur_y_s] == 0 and (cur_x_s - 1, cur_y_s) not in path_s:
-                path_s[(cur_x_s - 1, cur_y_s)] = (cur_x_s, cur_y_s)
-                fringe_s.append((cur_x_s - 1, cur_y_s))
-                visited_s.append((cur_x_s - 1, cur_y_s))
-                if list(set(visited_s).intersection(set(visited_g))):
-                    finish = True
+                if visited_node[cur_x_s + 1][cur_y_s] == 0:
+                    fringe_s.append((cur_x_s + 1, cur_y_s))
+                    node_expanded.append((cur_x_s + 1, cur_y_s))
+                    visited_node[cur_x_s + 1][cur_y_s] = 1
+                else:
+                    node_meet = (cur_x_s + 1, cur_y_s)
                     break
             if cur_y_s + 1 < self.dim and self.env[cur_x_s][cur_y_s + 1] == 0 and (cur_x_s, cur_y_s + 1) not in path_s:
                 path_s[(cur_x_s, cur_y_s + 1)] = (cur_x_s, cur_y_s)
-                fringe_s.append((cur_x_s, cur_y_s + 1))
-                visited_s.append((cur_x_s, cur_y_s + 1))
-                if list(set(visited_s).intersection(set(visited_g))):
-                    finish = True
+                if visited_node[cur_x_s][cur_y_s + 1] == 0:
+                    fringe_s.append((cur_x_s, cur_y_s + 1))
+                    node_expanded.append((cur_x_s, cur_y_s + 1))
+                    visited_node[cur_x_s][cur_y_s + 1] = 1
+                else:
+                    node_meet = (cur_x_s, cur_y_s + 1)
+                    break
+            if cur_x_s - 1 >= 0 and self.env[cur_x_s - 1][cur_y_s] == 0 and (cur_x_s - 1, cur_y_s) not in path_s:
+                path_s[(cur_x_s - 1, cur_y_s)] = (cur_x_s, cur_y_s)
+                if visited_node[cur_x_s - 1][cur_y_s] == 0:
+                    fringe_s.append((cur_x_s - 1, cur_y_s))
+                    node_expanded.append((cur_x_s - 1, cur_y_s))
+                    visited_node[cur_x_s - 1][cur_y_s] = 1
+                else:
+                    node_meet = (cur_x_s - 1, cur_y_s)
                     break
             if cur_y_s - 1 >= 0 and self.env[cur_x_s][cur_y_s - 1] == 0 and (cur_x_s, cur_y_s - 1) not in path_s:
                 path_s[(cur_x_s, cur_y_s - 1)] = (cur_x_s, cur_y_s)
-                fringe_s.append((cur_x_s, cur_y_s - 1))
-                visited_s.append((cur_x_s, cur_y_s - 1))
-                if list(set(visited_s).intersection(set(visited_g))):
-                    finish = True
+                if visited_node[cur_x_s][cur_y_s - 1] == 0:
+                    fringe_s.append((cur_x_s, cur_y_s - 1))
+                    node_expanded.append((cur_x_s, cur_y_s - 1))
+                    visited_node[cur_x_s][cur_y_s - 1] = 1
+                else:
+                    node_meet = (cur_x_s, cur_y_s - 1)
                     break
 
-            if cur_x_g + 1 < self.dim and self.env[cur_x_g + 1][cur_y_g] == 0 and (cur_x_g + 1, cur_y_g) not in path_g:
-                path_g[(cur_x_g + 1, cur_y_g)] = (cur_x_g, cur_y_g)
-                fringe_g.append((cur_x_g + 1, cur_y_g))
-                visited_g.append((cur_x_g + 1, cur_y_g))
-                if list(set(visited_s).intersection(set(visited_g))):
-                    finish = True
-                    break
             if cur_x_g - 1 >= 0 and self.env[cur_x_g - 1][cur_y_g] == 0 and (cur_x_g - 1, cur_y_g) not in path_g:
                 path_g[(cur_x_g - 1, cur_y_g)] = (cur_x_g, cur_y_g)
-                fringe_g.append((cur_x_g - 1, cur_y_g))
-                visited_g.append((cur_x_g - 1, cur_y_g))
-                if list(set(visited_s).intersection(set(visited_g))):
-                    finish = True
-                    break
-            if cur_y_g + 1 < self.dim and self.env[cur_x_g][cur_y_g + 1] == 0 and (cur_x_g, cur_y_g + 1) not in path_g:
-                path_g[(cur_x_g, cur_y_g + 1)] = (cur_x_g, cur_y_g)
-                fringe_g.append((cur_x_g, cur_y_g + 1))
-                visited_g.append((cur_x_g, cur_y_g + 1))
-                if list(set(visited_s).intersection(set(visited_g))):
-                    finish = True
+                if visited_node[cur_x_g - 1][cur_y_g] == 0:
+                    fringe_g.append((cur_x_g - 1, cur_y_g))
+                    node_expanded.append((cur_x_g - 1, cur_y_g))
+                    visited_node[cur_x_g - 1][cur_y_g] = 1
+                else:
+                    node_meet = (cur_x_g - 1, cur_y_g)
                     break
             if cur_y_g - 1 >= 0 and self.env[cur_x_g][cur_y_g - 1] == 0 and (cur_x_g, cur_y_g - 1) not in path_g:
                 path_g[(cur_x_g, cur_y_g - 1)] = (cur_x_g, cur_y_g)
-                fringe_g.append((cur_x_g, cur_y_g - 1))
-                visited_g.append((cur_x_g, cur_y_g - 1))
-                if list(set(visited_s).intersection(set(visited_g))):
-                    finish = True
+                if visited_node[cur_x_g][cur_y_g - 1] == 0:
+                    fringe_g.append((cur_x_g, cur_y_g - 1))
+                    node_expanded.append((cur_x_g, cur_y_g - 1))
+                    visited_node[cur_x_g][cur_y_g - 1] = 1
+                else:
+                    node_meet = (cur_x_g, cur_y_g - 1)
+                    break
+            if cur_x_g + 1 < self.dim and self.env[cur_x_g + 1][cur_y_g] == 0 and (cur_x_g + 1, cur_y_g) not in path_g:
+                path_g[(cur_x_g + 1, cur_y_g)] = (cur_x_g, cur_y_g)
+                if visited_node[cur_x_g + 1][cur_y_g] == 0:
+                    fringe_g.append((cur_x_g + 1, cur_y_g))
+                    node_expanded.append((cur_x_g + 1, cur_y_g))
+                    visited_node[cur_x_g + 1][cur_y_g] = 1
+                else:
+                    node_meet = (cur_x_g + 1, cur_y_g)
+                    break
+            if cur_y_g + 1 < self.dim and self.env[cur_x_g][cur_y_g + 1] == 0 and (cur_x_g, cur_y_g + 1) not in path_g:
+                path_g[(cur_x_g, cur_y_g + 1)] = (cur_x_g, cur_y_g)
+                if visited_node[cur_x_g][cur_y_g + 1] == 0:
+                    fringe_g.append((cur_x_g, cur_y_g + 1))
+                    node_expanded.append((cur_x_g, cur_y_g + 1))
+                    visited_node[cur_x_g][cur_y_g + 1] = 1
+                else:
+                    node_meet = (cur_x_g, cur_y_g + 1)
                     break
 
-        if finish:
-            path_list1 = list(set(visited_s).intersection(set(visited_g)))
+        if node_meet is not (0, 0):
+            path_list1 = [node_meet]
             while path_list1[-1] != (0, 0):
                 path_list1.append(path_s[path_list1[-1]])
             path_list1.reverse()
-            path_list2 = list(set(visited_s).intersection(set(visited_g)))
+            path_list2 = [node_meet]
             while path_list2[-1] != (self.dim - 1, self.dim - 1):
                 path_list2.append(path_g[path_list2[-1]])
             path_list1.pop()
-            visited_s.remove(list(set(visited_s).intersection(set(visited_g)))[0])
-            node_visited = (visited_s + visited_g)
-            solution_params.put(True, path_list1 + path_list2, 0, node_visited)
+            solution_params.put(True, path_list1 + path_list2, 0, node_expanded)
             return solution_params
         else:
             return solution_params
