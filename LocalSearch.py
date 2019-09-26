@@ -50,7 +50,7 @@ class LocalSearch(object):
         p_o2z = random.random()
         it = 0
         new_maze = deepcopy(self.cur_maze)
-        while (True):
+        while True:
             if p_cutpath < 0.6:
                 # path = self.cur_maze.solve('dfs').path
                 index = random.randint(1, len(path) - 2)
@@ -248,6 +248,10 @@ class LocalSearch(object):
         return hard_maze_list.get()
 
     def Maze_Generate(self, d):
+        """
+        Algorithm to generate a solvable random maze
+        p is chosen as a random number
+        """
         p = random.uniform(0.3, 0.4)
         tmp_m = Maze(p, d)
         while not tmp_m.solve('dfs').has_path:
@@ -256,7 +260,11 @@ class LocalSearch(object):
         tmp_m.env[d - 1][d - 1] = 0
         return tmp_m
 
-    def Maze_Score(self, m, d, alg):
+    def Maze_Score(self, m, alg):
+        """
+        Algorithm to determine whether a maze is hard
+        alg: algorithm we use to solve the maze
+        """
         if m.solve(alg) is False:
             return ori_maze.dim
         else:
@@ -270,6 +278,12 @@ class LocalSearch(object):
                 print("Only support dfs and a*")
 
     def Maze_merge(self, m1, m2, d, strategy):
+        """
+        take in two maze and merge them into one solvable maze
+        strategy: strategy we use to merge two maze,
+            if set to 1, simply cut them into half and merge
+            if set to 0, split each into 4 parts and merge them
+        """
         m1_n = deepcopy(m1)
         m2_n = deepcopy(m2)
         if strategy == 1:
@@ -296,6 +310,9 @@ class LocalSearch(object):
         return m3
 
     def random_picks(self, m_list, weight):
+        """
+        pick a maze form the list according to the probability given
+        """
         x = random.uniform(0, sum(weight))
         cumulative_weight = 0.0
         for m_list, m_weight in zip(m_list, weight):
@@ -305,6 +322,13 @@ class LocalSearch(object):
         return m_list
 
     def genetic_algorithm(self, alg):
+        """
+        maze_population: the queue we use when performing bfs
+        path(i, j): stores the previous point we visit before step into (i, j)
+        visited_node: the point already visited by either side of bfs
+        node_expanded: all the point we visited in the algorithm
+        node_meet: the point where two bfs meet
+        """
         # Generate Parents
         maze_population = []
         for t in range(self.population):
@@ -314,7 +338,7 @@ class LocalSearch(object):
         for k in range(self.genetic_iter):
             print("k=", k)
             weight.clear()
-            weight = [self.Maze_Score(maze_population[x], ori_maze.dim, alg) for x in range(self.population)]
+            weight = [self.Maze_Score(maze_population[x], alg) for x in range(self.population)]
             # Generate children
             i = 0
             while i < self.breed_cnt:
@@ -327,7 +351,7 @@ class LocalSearch(object):
 
                 if merge_m.solve('dfs').has_path:
                     maze_population.append(deepcopy(merge_m))
-                    weight.append(self.Maze_Score(merge_m, ori_maze.dim, alg))
+                    weight.append(self.Maze_Score(merge_m, alg))
                     self.population += 1
                     i += 1
 
@@ -345,9 +369,6 @@ class LocalSearch(object):
                 j += 1
 
         best_index = weight.index(max(weight))
-        print(maze_population[best_index])
-
-        # print(len(maze_population[best_index].solve(alg).path))
         return maze_population[best_index]
 
 
@@ -360,13 +381,3 @@ if __name__ == "__main__":
     print(max_fringe_size)
     printGraph(maze1, path)
 
-    # maze0 = sa.genetic_algorithm()
-    # maze0 = sa.genetic_algorithm('dfs')
-    # TestMaze(1, 30, maze0)
-
-    # sa.simulated_annealing("dfs")
-    # # print(sa.sa_tem)
-    # # print(sa.num_ob)
-    # print(sa.cur_maze.solve('dfs').max_fringe_size)
-    # # print(len(sa.cur_maze.solve('dfs').path))
-    # printGraph(sa.cur_maze, sa.cur_maze.solve('dfs').path)
