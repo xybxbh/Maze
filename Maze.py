@@ -92,6 +92,13 @@ class Maze(object):
         return solution_params
 
     def bd_bfs_solution(self):
+        """
+        fringe: the queue we use when performing bfs
+        path(i, j): stores the previous point we visit before step into (i, j)
+        visited_node: the point already visited by either side of bfs
+        node_expanded: all the point we visited in the algorithm
+        node_meet: the point where two bfs meet
+        """
         fringe_s = deque([(0, 0)])
         fringe_g = deque([(self.dim - 1, self.dim - 1)])
         path_s = {}
@@ -180,6 +187,7 @@ class Maze(object):
                     node_meet = (cur_x_g, cur_y_g + 1)
                     break
 
+        # if the algorithm finds a solution of the maze
         if node_meet is not (0, 0):
             path_list1 = [node_meet]
             while path_list1[-1] != (0, 0):
