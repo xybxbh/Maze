@@ -90,23 +90,46 @@ class MazeState(Maze):
     def weight_2step_solution(self):
         (cur_x, cur_y) = self.cur_pos
         neighbors = self.get_valid_neighbors(cur_x, cur_y)
-        weight_sur = {}
-        weight_dis = {}
+        weights = {}
         for node in neighbors:  # cant be none
             if node not in self.path:   # get_valid_neighbors is used by other methods, so here
-                weight_sur[node] = self.hf_survivalrate(node)
-                weight_dis[node] = self.hf_manhattan(node, (self.dim - 1, self.dim - 1))
-        if not weight_dis:
+                temp = {'sur': self.hf_survivalrate(node), 'dis': self.hf_manhattan(node, (self.dim - 1, self.dim - 1))}
+                weights[node] = temp
+        if not weights:
             for node in neighbors:
-                weight_sur[node] = self.hf_survivalrate(node)
-                weight_dis[node] = self.hf_manhattan(node, (self.dim - 1, self.dim - 1))
-        if not weight_dis:
+                temp = {'sur': self.hf_survivalrate(node), 'dis': self.hf_manhattan(node, (self.dim - 1, self.dim - 1))}
+                weights[node] = temp
+        if not weights:
             print('neighbors size', len(neighbors))
-        max_sur = [x for x, y in weight_sur.items() if y == max(weight_sur.values())]
-        min_dis = [x for x, y in weight_dis.items() if y == min(weight_dis.values())]
+        # print(weights)
+        max_sur = {x: y for x, y in weights.items() if y['sur'] == weights[max(weights, key=lambda x: weights[x]['sur'])]['sur']}
+        min_dis = [x for x, y in max_sur.items() if y['dis'] == max_sur[min(max_sur, key=lambda x: max_sur[x]['dis'])]['dis']]
         if len(min_dis) > 0:    # should be > 0
             return random.sample(min_dis, 1)[0]
-        print('size'. len(neighbors), len(weight_dis), len(max_sur), len(min_dis))
+        print('size'. len(neighbors), len(weights), len(max_sur), len(min_dis))
+
+    def weight_2step_solution_goal_first(self):
+        (cur_x, cur_y) = self.cur_pos
+        neighbors = self.get_valid_neighbors(cur_x, cur_y)
+        weights = {}
+        for node in neighbors:  # cant be none
+            if node not in self.path:   # get_valid_neighbors is used by other methods, so here
+                temp = {'sur': self.hf_survivalrate(node), 'dis': self.hf_manhattan(node, (self.dim - 1, self.dim - 1))}
+                weights[node] = temp
+        if not weights:
+            for node in neighbors:
+                temp = {'sur': self.hf_survivalrate(node), 'dis': self.hf_manhattan(node, (self.dim - 1, self.dim - 1))}
+                weights[node] = temp
+        if not weights:
+            print('neighbors size', len(neighbors))
+        # print(weights)
+
+        min_dis = {x: y for x, y in weights.items() if y['dis'] == weights[min(weights, key=lambda x: weights[x]['dis'])]['dis']}
+        max_sur = [x for x, y in min_dis.items() if y['sur'] == min_dis[max(min_dis, key=lambda x: min_dis[x]['sur'])]['sur']]
+        
+        if len(max_sur) > 0:    # should be > 0
+            return random.sample(max_sur, 1)[0]
+        print('size'. len(neighbors), len(weights), len(max_sur), len(min_dis))
 
     def update_path(self, alg):
         if alg == 'astar':
@@ -117,8 +140,11 @@ class MazeState(Maze):
         elif alg == 'weight':
             self.cur_pos = self.weight_solution()
             self.path.append(self.cur_pos)
-        elif alg == 'weight_2step':
+        elif alg == 'weight_sur_first':
             self.cur_pos = self.weight_2step_solution()
+            self.path.append(self.cur_pos)
+        elif alg == 'weight_dis_first':
+            self.cur_pos = self.weight_2step_solution_goal_first()
             self.path.append(self.cur_pos)
         else:
             index = self.path.index(self.cur_pos)
@@ -215,7 +241,9 @@ class MazeState(Maze):
             pass
         elif alg == 'weight':
             pass
-        elif alg == 'weight_2step':
+        elif alg == 'weight_sur_first':
+            pass
+        elif alg == 'weight_dis_first':
             pass
         elif alg == 'aco':
             self.path = self.aco()
@@ -251,24 +279,14 @@ def experiment(maze_state, sol):
 
 if __name__ == "__main__":
     count = 0
-    for i in range(1000):
+    for i in range(100):
         init_state = MazeState(0.2, 30, 0.5)
-        status = experiment(init_state, 'weight_2step')
+        status = experiment(init_state, 'weight_dis_first')
         print(i, status, init_state.cur_pos, init_state.get_fire_num())
         if status:
         # if experiment(init_state):
             count += 1
-    print(count/1000)
-
-    # count = 0
-    # init_state = MazeState(0.2, 20, 0.01)
-    # for i in range(100):
-    #     status = experiment(init_state, 'aoc')
-    #     print(i, status, init_state.cur_pos, init_state.get_fire_num())
-    #     if status:
-    #     # if experiment(init_state):
-    #         count += 1
-    # print(count/100)
+    print(count/100)
 
     # init_state = MazeState(0.2, 30, 0.5)
-    # print(experiment(init_state))
+    # print(experiment(init_state, 'weight_2step'))
