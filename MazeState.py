@@ -3,6 +3,7 @@ from copy import deepcopy
 import random
 import numpy as np
 
+
 class MazeState(Maze):
     def __init__(self, p, d, q):
         Maze.__init__(self, p, d)
@@ -35,6 +36,7 @@ class MazeState(Maze):
                 self_reverse.env[row] = list(reversed(self.env[row]))
 
     def update_maze(self):
+        # simulating the spread of fire in the maze
         p = random.random()
         temp_maze = deepcopy(self)
         for row in range(self.dim):
@@ -61,7 +63,7 @@ class MazeState(Maze):
     def hf_choose(self, function, node1, node2):
         if function == "survivalrate":
             w1, w2 = 30, -1
-            return self.hf_survivalrate(node1)*w1 + self.hf_manhattan(node1, node2)*w2
+            return self.hf_survivalrate(node1) * w1 + self.hf_manhattan(node1, node2) * w2
         return False
 
     def hf_survivalrate(self, node1):
@@ -83,10 +85,12 @@ class MazeState(Maze):
         weights = {}
         for node in neighbors:
             if node not in self.path:
-                weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
+                weights[node] = self.hf_survivalrate(node) * w1 + self.hf_manhattan(node,
+                                                                                    (self.dim - 1, self.dim - 1)) * w2
         if not weights:
             for node in neighbors:
-                weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
+                weights[node] = self.hf_survivalrate(node) * w1 + self.hf_manhattan(node,
+                                                                                    (self.dim - 1, self.dim - 1)) * w2
         return max(weights, key=weights.get)
 
     def weight_2step_solution(self):
@@ -94,7 +98,7 @@ class MazeState(Maze):
         neighbors = self.get_valid_neighbors(cur_x, cur_y)
         weights = {}
         for node in neighbors:  # cant be none
-            if node not in self.path:   # get_valid_neighbors is used by other methods, so here
+            if node not in self.path:  # get_valid_neighbors is used by other methods, so here
                 temp = {'sur': self.hf_survivalrate(node), 'dis': self.hf_manhattan(node, (self.dim - 1, self.dim - 1))}
                 weights[node] = temp
         if not weights:
@@ -104,9 +108,11 @@ class MazeState(Maze):
         if not weights:
             print('neighbors size', len(neighbors))
         # print(weights)
-        max_sur = {x: y for x, y in weights.items() if y['sur'] == weights[max(weights, key=lambda x: weights[x]['sur'])]['sur']}
-        min_dis = [x for x, y in max_sur.items() if y['dis'] == max_sur[min(max_sur, key=lambda x: max_sur[x]['dis'])]['dis']]
-        if len(min_dis) > 0:    # should be > 0
+        max_sur = {x: y for x, y in weights.items() if
+                   y['sur'] == weights[max(weights, key=lambda x: weights[x]['sur'])]['sur']}
+        min_dis = [x for x, y in max_sur.items() if
+                   y['dis'] == max_sur[min(max_sur, key=lambda x: max_sur[x]['dis'])]['dis']]
+        if len(min_dis) > 0:  # should be > 0
             return random.sample(min_dis, 1)[0]
         print('size', len(neighbors), len(weights), len(max_sur), len(min_dis))
 
@@ -115,7 +121,7 @@ class MazeState(Maze):
         neighbors = self.get_valid_neighbors(cur_x, cur_y)
         weights = {}
         for node in neighbors:  # cant be none
-            if node not in self.path:   # get_valid_neighbors is used by other methods, so here
+            if node not in self.path:  # get_valid_neighbors is used by other methods, so here
                 temp = {'sur': self.hf_survivalrate(node), 'dis': self.hf_manhattan(node, (self.dim - 1, self.dim - 1))}
                 weights[node] = temp
         if not weights:
@@ -126,14 +132,17 @@ class MazeState(Maze):
             print('neighbors size', len(neighbors))
         # print(weights)
 
-        min_dis = {x: y for x, y in weights.items() if y['dis'] == weights[min(weights, key=lambda x: weights[x]['dis'])]['dis']}
-        max_sur = [x for x, y in min_dis.items() if y['sur'] == min_dis[max(min_dis, key=lambda x: min_dis[x]['sur'])]['sur']]
-        
-        if len(max_sur) > 0:    # should be > 0
+        min_dis = {x: y for x, y in weights.items() if
+                   y['dis'] == weights[min(weights, key=lambda x: weights[x]['dis'])]['dis']}
+        max_sur = [x for x, y in min_dis.items() if
+                   y['sur'] == min_dis[max(min_dis, key=lambda x: min_dis[x]['sur'])]['sur']]
+
+        if len(max_sur) > 0:  # should be > 0
             return random.sample(max_sur, 1)[0]
-        print('size'. len(neighbors), len(weights), len(max_sur), len(min_dis))
+        print('size'.len(neighbors), len(weights), len(max_sur), len(min_dis))
 
     def update_path(self, alg):
+        # make decision of which path to take in each step according to different algorithms
         if alg == 'astar':
             params = self.astarsearch_solution('survivalrate', self.cur_pos)
             if params.has_path:
@@ -181,26 +190,27 @@ class MazeState(Maze):
         print(origin_env)
         p = self.solve('bfs').path
         self.weight = [[(1 / 4 * self.dim) for col in range(self.dim)] for row in range(self.dim)]
-        self.heuristic = [[1 / (self.hf_manhattan((row, col), (self.dim - 1, self.dim - 1)) + 1)for col in range(self.dim)] for row in range(self.dim)]
+        self.heuristic = [
+            [1 / (self.hf_manhattan((row, col), (self.dim - 1, self.dim - 1)) + 1) for col in range(self.dim)] for row
+            in range(self.dim)]
         for node in p:
             (xx, yy) = node
             self.weight[xx][yy] = 1 / len(p)
+
+        # iteration
         for ii in range(self.iter_time):
             print("iter:", ii)
             tmp_weight = self.weight
-            for j in range(self.ant_num):
+            # release ants into the maze
+            num_survive = 0
+            for jj in range(self.ant_num):
                 self.env = deepcopy(origin_env)
                 tmp_path = [(0, 0)]
                 self.cur_pos = (0, 0)
                 while True:
-                    # for kk in range(self.dim):
-                    #     print(self.env[kk])
-                    # print(self.cur_pos)
-                    # print(tmp_path)
-                    # print("--------------------")
-
                     if self.cur_pos == (self.dim - 1, self.dim - 1):
                         # break out
+                        num_survive += 1
                         status_ = 'win'
                         break
                     if self.path_choosing(tmp_path) is not False:
@@ -221,7 +231,10 @@ class MazeState(Maze):
                         (x, y) = tmp_path[t]
                         tmp_weight[x][y] += 1 / len(tmp_path)
             self.weight = [[tmp_weight[row][col] * self.rou for col in range(self.dim)] for row in range(self.dim)]
-        # generate solution
+            survival_rate = num_survive / self.ant_num
+            print(survival_rate, "of ants survive!")
+
+        # generate final solution according to weight
         success = False
         while not success:
             self.env = deepcopy(origin_env)
@@ -252,7 +265,7 @@ class MazeState(Maze):
         else:
             self.path = self.solve(alg).path
 
-    def get_fire_num(self): # for test stdout
+    def get_fire_num(self):  # for test stdout
         count = 0
         for i in range(self.dim):
             for j in range(self.dim):
@@ -262,6 +275,7 @@ class MazeState(Maze):
 
 
 def experiment(maze_state, sol):
+    # tesing function
     maze_state.cur_pos = (0, 0)
     maze_state.generate_path(sol)
     while True:
@@ -276,8 +290,8 @@ def experiment(maze_state, sol):
             return True
     return False
 
+    # update
 
-    #update
 
 if __name__ == "__main__":
     for j in range(10):
@@ -287,9 +301,9 @@ if __name__ == "__main__":
             status = experiment(init_state, 'weight_sur_first')
             # print(i, status, init_state.cur_pos, init_state.get_fire_num())
             if status:
-            # if experiment(init_state):
+                # if experiment(init_state):
                 count += 1
-        print(count/100)
+        print(count / 100)
 
     # init_state = MazeState(0.2, 30, 0.5)
     # print(experiment(init_state, 'weight_2step'))
