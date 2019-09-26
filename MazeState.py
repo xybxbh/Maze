@@ -60,7 +60,7 @@ class MazeState(Maze):
 
     def hf_choose(self, function, node1, node2):
         if function == "survivalrate":
-            w1, w2 = 30, -1
+            w1, w2 = 0, 1
             return self.hf_survivalrate(node1)*w1 + self.hf_manhattan(node1, node2)*w2
         return False
 
@@ -87,7 +87,11 @@ class MazeState(Maze):
         if not weights:
             for node in neighbors:
                 weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
-        return max(weights, key=weights.get)
+        print(weights)
+        for node in neighbors:
+            print(node, self.hf_survivalrate(node), self.hf_manhattan(node, (self.dim - 1, self.dim - 1)))
+        max_weight = [x for x, y in weights.items() if y == max(weights.values())]
+        return random.sample(max_weight, 1)[0]
 
     def weight_2step_solution(self):
         (cur_x, cur_y) = self.cur_pos
@@ -283,13 +287,13 @@ if __name__ == "__main__":
     for j in range(10):
         count = 0
         for i in range(100):
-            init_state = MazeState(0.2, 30, 0.5)
-            status = experiment(init_state, 'weight_sur_first')
+            init_state = MazeState(0.2, 50, 0.5)
+            status = experiment(init_state, 'dfs')
             # print(i, status, init_state.cur_pos, init_state.get_fire_num())
             if status:
             # if experiment(init_state):
                 count += 1
         print(count/100)
 
-    # init_state = MazeState(0.2, 30, 0.5)
-    # print(experiment(init_state, 'weight_2step'))
+    # init_state = MazeState(0.2, 30, 0.6)
+    # print(experiment(init_state, 'weight'))
