@@ -27,8 +27,10 @@ class MazeState(Maze):
         for row in range(self_reverse.dim):
             self_reverse.env[row] = list(reversed(self_reverse.env[row]))
         while self.solve("dfs").has_path is False or self_reverse.solve('dfs').has_path is False:
-            print('reinit')
+            # print('reinit')
             self.env = [[np.random.binomial(1, self.occ_rate) for col in range(self.dim)] for row in range(self.dim)]
+            self.env[0][0] = 0
+            self.env[self.dim - 1][self.dim - 1] = 0
             for row in range(self_reverse.dim):
                 self_reverse.env[row] = list(reversed(self.env[row]))
 
@@ -106,7 +108,7 @@ class MazeState(Maze):
         min_dis = [x for x, y in max_sur.items() if y['dis'] == max_sur[min(max_sur, key=lambda x: max_sur[x]['dis'])]['dis']]
         if len(min_dis) > 0:    # should be > 0
             return random.sample(min_dis, 1)[0]
-        print('size'. len(neighbors), len(weights), len(max_sur), len(min_dis))
+        print('size', len(neighbors), len(weights), len(max_sur), len(min_dis))
 
     def weight_2step_solution_goal_first(self):
         (cur_x, cur_y) = self.cur_pos
@@ -278,15 +280,16 @@ def experiment(maze_state, sol):
     #update
 
 if __name__ == "__main__":
-    count = 0
-    for i in range(100):
-        init_state = MazeState(0.2, 30, 0.5)
-        status = experiment(init_state, 'weight_dis_first')
-        print(i, status, init_state.cur_pos, init_state.get_fire_num())
-        if status:
-        # if experiment(init_state):
-            count += 1
-    print(count/100)
+    for j in range(10):
+        count = 0
+        for i in range(100):
+            init_state = MazeState(0.2, 30, 0.5)
+            status = experiment(init_state, 'weight_sur_first')
+            # print(i, status, init_state.cur_pos, init_state.get_fire_num())
+            if status:
+            # if experiment(init_state):
+                count += 1
+        print(count/100)
 
     # init_state = MazeState(0.2, 30, 0.5)
     # print(experiment(init_state, 'weight_2step'))
