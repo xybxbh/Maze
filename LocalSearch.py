@@ -14,17 +14,19 @@ class LocalSearch(object):
             print('false')
             regen_maze = Maze(ori_maze.occ_rate, ori_maze.dim)
             self.update_maze_param(regen_maze)
+        # simulated annealing params
         self.sa_tem = 1
         self.sa_tmin = 1e-8
         self.sa_delta = 0.98
 
+        # genetic algorithm params
         self.population = 1000
         self.genetic_iter = 2
         self.breed_cnt = 1000
         self.mutant_rate = 0.6
 
 
-    def update_maze_param(self, maze):
+    def update_maze_param(self, maze):  # bound maze update and num_ob update together
         self.cur_maze = maze
         self.num_ob = self.get_obstruction_num()
 

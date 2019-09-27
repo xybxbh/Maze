@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 class Maze(object):
-    class SolutionParams(object):
+    class SolutionParams(object):   # storing return values of all search functions
         def __init__(self, has_path = False):
             self.has_path = has_path
 

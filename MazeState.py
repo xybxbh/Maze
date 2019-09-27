@@ -1,10 +1,13 @@
 from Maze import *
 from copy import deepcopy
 import random
+import datetime
 import numpy as np
 
 
 class MazeState(Maze):
+    # 1.4. extended from Maze to reprensent a state,
+    # also in order to use search functions
     def __init__(self, p, d, q):
         Maze.__init__(self, p, d)
         self.cur_pos = (0, 0)
@@ -60,10 +63,10 @@ class MazeState(Maze):
             res.append((cur_x, cur_y - 1))
         return res
 
-    def hf_choose(self, function, node1, node2):
+    def hf_choose(self, function, node1, node2):    # for Maze.astarsearch_solution
         if function == "survivalrate":
-            w1, w2 = 30, -1
-            return self.hf_survivalrate(node1) * w1 + self.hf_manhattan(node1, node2) * w2
+            w1, w2 = -8, 1
+            return self.hf_survivalrate(node1) * w1 + self.hf_euclidean(node1, node2) * w2
         return False
 
     def hf_survivalrate(self, node1):
@@ -78,8 +81,8 @@ class MazeState(Maze):
                 k += 1
         return pow((1 - self.fla_rate), k)
 
-    def weight_solution(self):
-        w1, w2 = 30, -1
+    def weight_solution(self):  # in report 4.1.3, determine next step by a simple weighted arithmetic mean
+        w1, w2 = -8, 1
         (cur_x, cur_y) = self.cur_pos
         neighbors = self.get_valid_neighbors(cur_x, cur_y)
         weights = {}
@@ -89,13 +92,13 @@ class MazeState(Maze):
         if not weights:
             for node in neighbors:
                 weights[node] = self.hf_survivalrate(node)*w1 + self.hf_manhattan(node, (self.dim - 1, self.dim - 1))*w2
-        print(weights)
-        for node in neighbors:
-            print(node, self.hf_survivalrate(node), self.hf_manhattan(node, (self.dim - 1, self.dim - 1)))
-        max_weight = [x for x, y in weights.items() if y == max(weights.values())]
-        return random.sample(max_weight, 1)[0]
+        # print(weights)
+        # for node in neighbors:
+        #     print(node, self.hf_survivalrate(node), self.hf_manhattan(node, (self.dim - 1, self.dim - 1)))
+        min_weight = [x for x, y in weights.items() if y == min(weights.values())]
+        return random.sample(min_weight, 1)[0]
 
-    def weight_2step_solution(self):
+    def weight_2step_solution(self):    # in report 4.1.3, optimization(?) of weight_solution()
         (cur_x, cur_y) = self.cur_pos
         neighbors = self.get_valid_neighbors(cur_x, cur_y)
         weights = {}
@@ -116,7 +119,7 @@ class MazeState(Maze):
             return random.sample(min_dis, 1)[0]
         print('size', len(neighbors), len(weights), len(max_sur), len(min_dis))
 
-    def weight_2step_solution_goal_first(self):
+    def weight_2step_solution_goal_first(self): # we also implemented a method swapping 2&3 in report 4.1.3 
         (cur_x, cur_y) = self.cur_pos
         neighbors = self.get_valid_neighbors(cur_x, cur_y)
         weights = {}
@@ -292,16 +295,19 @@ def experiment(maze_state, sol):
 
 
 if __name__ == "__main__":
+    starttime = datetime.datetime.now()
     for j in range(10):
         count = 0
         for i in range(100):
-            init_state = MazeState(0.2, 50, 0.5)
-            status = experiment(init_state, 'dfs')
+            init_state = MazeState(0.2, 30, 0.6)
+            status = experiment(init_state, 'astar')
             # print(i, status, init_state.cur_pos, init_state.get_fire_num())
             if status:
                 # if experiment(init_state):
                 count += 1
         print(count / 100)
+    endtime = datetime.datetime.now()
+    print(endtime - starttime).seconds
 
     # init_state = MazeState(0.2, 30, 0.6)
     # print(experiment(init_state, 'weight'))
