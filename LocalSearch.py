@@ -48,8 +48,8 @@ class LocalSearch(object):
 
     def gen_maze(self, path):
         # one random neighbor in each iteration
-        p_cutpath = random.random()
-        p_o2z = random.random()
+        p_cutpath = random.random() # prob that cutting a node in the path, otherwise selecting randomly in the maze
+        p_o2z = random.random() # prob that setting a node with obstruction to available
         it = 0
         new_maze = deepcopy(self.cur_maze)
         while True:
@@ -167,12 +167,12 @@ class LocalSearch(object):
 
     def simulated_annealing(self, alg):
         while self.sa_tem > self.sa_tmin:
-            # here we can do search with multi-neighbors
             new_maze = self.gen_maze(self.cur_maze.solve(alg).path)
             if not new_maze.solve(alg).has_path:
                 continue
             p = random.random()
             comparator = self.comparator(alg, "max_fringe_size", new_maze)
+            # e^700+ will be out of stack
             p_sa = 1 / (1 + math.exp(0 - comparator / self.sa_tem)) if (0 - comparator / self.sa_tem) < 500 else 0
             if comparator > 0 or p < p_sa:
                 self.update_maze_param(new_maze)

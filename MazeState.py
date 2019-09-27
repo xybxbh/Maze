@@ -65,7 +65,7 @@ class MazeState(Maze):
 
     def hf_choose(self, function, node1, node2):    # for Maze.astarsearch_solution
         if function == "survivalrate":
-            w1, w2 = -8, 1
+            w1, w2 = 0, 1
             return self.hf_survivalrate(node1) * w1 + self.hf_euclidean(node1, node2) * w2
         return False
 
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         count = 0
         for i in range(100):
             init_state = MazeState(0.2, 30, 0.6)
-            status = experiment(init_state, 'astar')
+            status = experiment(init_state, 'dfs')
             # print(i, status, init_state.cur_pos, init_state.get_fire_num())
             if status:
                 # if experiment(init_state):
