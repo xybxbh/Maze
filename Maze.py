@@ -2,11 +2,12 @@ import numpy as np
 from collections import deque
 import queue
 
-import matplotlib.pyplot as plt
-
 
 class Maze(object):
-    class SolutionParams(object):   # storing return values of all search functions
+    # storing return values of all search functions
+    # when there is not a path in maze return has_path
+    # else return all parameter
+    class SolutionParams(object):
         def __init__(self, has_path = False):
             self.has_path = has_path
 
@@ -17,6 +18,7 @@ class Maze(object):
             self.nodes_expanded = nodes_expanded
 
     def __init__(self, p, d, import_m=None):
+        # for genetic local search algorithm
         if import_m:
             self.dim = d
             self.env = [[import_m.env[row][col] for col in range(d)] for row in range(d)]
@@ -24,18 +26,18 @@ class Maze(object):
             self.occ_rate = p
             self.dim = d
             self.env = [[np.random.binomial(1, p) for col in range(d)] for row in range(d)]
-            # self.env = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
             self.env[0][0] = 0
             self.env[d - 1][d - 1] = 0
 
+    # backtrace the path, reference: https://stackoverflow.com/questions/8922060/how-to-trace-the-path-in-a-breadth-first-search
     def backtrace(self, path, start):
-        # backtrace the path, reference: https://stackoverflow.com/questions/8922060/how-to-trace-the-path-in-a-breadth-first-search
         path_list = [(self.dim - 1, self.dim - 1)]
         while path_list[-1] != start:
             path_list.append(path[path_list[-1]])
         path_list.reverse()
         return path_list
 
+    # check if neighboring rooms are valid and load valid neighbors
     def get_valid(self, cur_x, cur_y, path):
         res = []
         # valid: in the range, no obstruction, not visited
@@ -49,6 +51,23 @@ class Maze(object):
             res.append((cur_x + 1, cur_y))
         return res
 
+    # Load order before improvement for DFS
+    # only used by dfs_unimproved
+    def get_valid_unimproved(self, cur_x, cur_y, path):
+        res = []
+        # valid: in the range, no obstruction, not visited
+        if cur_x + 1 < self.dim and self.env[cur_x + 1][cur_y] == 0 and (cur_x + 1, cur_y) not in path:
+            res.append((cur_x + 1, cur_y))
+        if cur_y + 1 < self.dim and self.env[cur_x][cur_y + 1] == 0 and (cur_x, cur_y + 1) not in path:
+            res.append((cur_x, cur_y + 1))
+        if cur_x - 1 >= 0 and self.env[cur_x - 1][cur_y] == 0 and (cur_x - 1, cur_y) not in path:
+            res.append((cur_x - 1, cur_y))
+        if cur_y - 1 >= 0 and self.env[cur_x][cur_y - 1] == 0 and (cur_x, cur_y - 1) not in path:
+            res.append((cur_x, cur_y - 1))
+        return res
+
+    # bfs
+    # return hasPath: bool; path: list; max_fringe_size: int; nodes_expanded: list
     def bfs_solution(self):
         fringe = deque([(0, 0)])
         path = {}
@@ -70,7 +89,9 @@ class Maze(object):
                     fringe.append(node)
         return solution_params
 
-    def dfs_solution(self):  # return hasPath: bool; path: list; max_fringe_size: int
+    # dfs(improved)
+    # return hasPath: bool; path: list; max_fringe_size: int; nodes_expanded: list
+    def dfs_solution(self):
         fringe = [(0, 0)]
         path = {}
         max_fringe_size = 1
@@ -91,6 +112,31 @@ class Maze(object):
                     fringe.append(node)
         return solution_params
 
+    # dfs(unimprove the loading order)
+    # return hasPath: bool; path: list; max_fringe_size: int; nodes_expanded: list
+    def dfs_solution_unimproved(self):
+        fringe = [(0, 0)]
+        path = {}
+        max_fringe_size = 1
+        nodes_expanded = []
+        solution_params = self.SolutionParams()
+        while fringe:
+            if len(fringe) > max_fringe_size:
+                max_fringe_size = len(fringe)
+            (cur_x, cur_y) = fringe.pop()
+            if cur_x == self.dim - 1 and cur_y == self.dim - 1:
+                solution_params.put(True, self.backtrace(path, (0, 0)), max_fringe_size, nodes_expanded)
+                return solution_params
+            nodes_expanded.append((cur_x, cur_y))
+            res = self.get_valid_unimproved(cur_x, cur_y, path)
+            if res:
+                for node in res:
+                    path[node] = (cur_x, cur_y)
+                    fringe.append(node)
+        return solution_params
+
+    # BDBFS
+    # return hasPath: bool; path: list; max_fringe_size: int; nodes_expanded: list
     def bd_bfs_solution(self):
         """
         fringe: the queue we use when performing bfs
@@ -202,18 +248,23 @@ class Maze(object):
         else:
             return solution_params
 
+    # MANHATTAN DISTANCE calculation fuction
+    # return: float
     @staticmethod
     def hf_manhattan(node1, node2):
         (x1, y1) = node1
         (x2, y2) = node2
         return abs(x2 - x1) + abs(y2 - y1)
 
+    # EUCLIDEAN DISTANCE calculation fuction
+    # return: float
     @staticmethod
     def hf_euclidean(node1, node2):
         (x1, y1) = node1
         (x2, y2) = node2
         return np.sqrt(np.square(x2 - x1) + np.square(y2 - y1))
 
+    # choose Manhattan or Euclidean as heuristic function
     def hf_choose(self, function, node1, node2):
         if function == "Manhattan":
             return self.hf_manhattan(node1, node2)
@@ -221,6 +272,8 @@ class Maze(object):
             return self.hf_euclidean(node1, node2)
         return False
 
+    # a* search
+    # return hasPath: bool; path: list; max_fringe_size: int; nodes_expanded: list
     def astarsearch_solution(self, heuristicFunction, start):
         fringe = queue.PriorityQueue()
         fringe.put((0, 0, start))
@@ -234,7 +287,6 @@ class Maze(object):
                 max_fringe_size = fringe.qsize()
             (total_estCost, alr_cost, (cur_x, cur_y)) = fringe.get()
             if (cur_x, cur_y) == goal:
-                # print(self.backtrace(path, start))
                 solution_params.put(True, self.backtrace(path, start), max_fringe_size, nodes_expanded)
                 return solution_params
             nodes_expanded.append((cur_x, cur_y))
@@ -246,6 +298,7 @@ class Maze(object):
                     fringe.put((est_cost - alr_cost + 1, alr_cost - 1, node))
         return solution_params
 
+    # maze solve: choose path solution function
     def solve(self, alg, heuristicFunction="Manhattan", start=(0, 0)):
         if alg == "dfs":
             return self.dfs_solution()
@@ -255,5 +308,7 @@ class Maze(object):
             return self.bd_bfs_solution()
         elif alg == "a*":
             return self.astarsearch_solution(heuristicFunction, start)
+        elif alg == 'dfs_unimproved':
+            return self.dfs_solution_unimproved()
         else:
             return False

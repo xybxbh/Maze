@@ -14,22 +14,30 @@ class LocalSearch(object):
             print('false')
             regen_maze = Maze(ori_maze.occ_rate, ori_maze.dim)
             self.update_maze_param(regen_maze)
-        # simulated annealing params
+        # parameters for simulated annealing
         self.sa_tem = 1
         self.sa_tmin = 1e-8
         self.sa_delta = 0.98
 
-        # genetic algorithm params
+        # parameters for genetic search
         self.population = 1000
-        self.genetic_iter = 2
+        self.genetic_iter = 20
         self.breed_cnt = 1000
         self.mutant_rate = 0.6
 
+        # parameters for beam search
+        self.members = 10
+        self.k_best = 30
 
-    def update_maze_param(self, maze):  # bound maze update and num_ob update together
+    # replace the old maze by the new one
+    # bound maze update and num_ob update together
+    # using for simulated annealing
+    def update_maze_param(self, maze):
         self.cur_maze = maze
         self.num_ob = self.get_obstruction_num()
 
+    # count the number of obstacle in the current maze
+    # using for simulated annealing
     def get_obstruction_num(self):
         count = 0
         for i in range(self.cur_maze.dim):
@@ -38,14 +46,8 @@ class LocalSearch(object):
                     count += 1
         return count
 
-    def get_obstruction_num2(self, cur_maze):
-        count = 0
-        for i in range(cur_maze.dim):
-            for j in range(cur_maze.dim):
-                if cur_maze.env[i][j] == 1:
-                    count += 1
-        return count
-
+    # generate new maze that add or remove obstacle based on current maze
+    # using this function for simulated annealing
     def gen_maze(self, path):
         # one random neighbor in each iteration
         p_cutpath = random.random() # prob that cutting a node in the path, otherwise selecting randomly in the maze
@@ -65,7 +67,7 @@ class LocalSearch(object):
                 continue
             if self.cur_maze.env[x][y] == 0 or p_o2z < self.num_ob / (self.cur_maze.dim * self.cur_maze.dim):
                 new_maze.env[x][y] = 1 - new_maze.env[x][y]
-                # solvablility certification in the sa function
+                # solvability certification in the sa function
                 break
             else:
                 print(x, y)
@@ -75,53 +77,14 @@ class LocalSearch(object):
                 break
         return new_maze
 
-
-    def gen_maze3(self, cur_maze, iter):
-        # one random neighbor in each iteration
-        p_cutpath = random.random()
-        it = 0
-        new_maze = deepcopy(cur_maze)
-        path_param =  cur_maze.solve("dfs")
-        path = path_param.path
-        max_fringe_size = path_param.max_fringe_size
-        while(True):
-            # x, y = path[random.randint(0, len(path) - 1)]
-            # new_maze.env[x][y] = 1
-            # if new_maze.solve("dfs").has_path == False:
-            #     it += 1
-            #     new_maze.env[x][y] = 0
-            # else:
-            #     break
-            # if p_cutpath < 0.6:
-            if iter < 30:
-                path = self.cur_maze.solve('dfs').path
-                index = random.randint(1, len(path) - 2)
-                (x_cut, y_cut) = path[index]
-                new_maze.env[x_cut][y_cut] = 1
-
-            x = random.randint(0, cur_maze.dim - 1)
-            y = random.randint(0, cur_maze.dim - 1)
-
-            if (x == 0 and y == 0) or (x == self.cur_maze.dim - 1 and y == self.cur_maze.dim - 1):
-                continue
-            if cur_maze.env[x][y] == 0:
-                new_maze.env[x][y] = 1
-                if new_maze.solve("dfs").has_path == False:
-                    it += 1
-                else:
-                    break
-            if it == 1000:
-                print('iter protection')
-                return False
-        return new_maze
-
-    def gen_maze4(self, cur_maze, iter):
-        # one random neighbor in each iteration
-        p = random.random()
+    # generate new maze that add obstacles based on current maze
+    # using this function for beam search
+    def gen_maze_bs(self, alg, cur_maze, iter):
         it = 0
         new_maze = deepcopy(cur_maze)
         while(True):
             change = 0
+            # add three obstacles at first three iteration
             if iter < 30:
                 for i in range(0, 3):
                     x = random.randint(0, cur_maze.dim - 1)
@@ -129,6 +92,7 @@ class LocalSearch(object):
                     if cur_maze.env[x][y] == 0:
                         new_maze.env[x][y] = 1
                         change = 1
+            # add one obstacle
             else:
                 x = random.randint(0, cur_maze.dim - 1)
                 y = random.randint(0, cur_maze.dim - 1)
@@ -136,24 +100,19 @@ class LocalSearch(object):
                     new_maze.env[x][y] = 1
                     change = 1
             if change == 1:
-                if new_maze.solve("dfs").has_path == False:
+                if new_maze.solve(alg).has_path == False:
                     it += 1
                 else:
                     break
-            # elif cur_maze.env[x][y] == 1 and p < num_ob/(cur_maze.dim * cur_maze.dim):
-            #     new_maze.env[x][y] = 0
-            #     if new_maze.solve("dfs").has_path == False:
-            #         it += 1
-            #     else:
-            #         break
             else:
-                # print(x, y)
                 it += 1
             if it == 1000:
                 print('iter protection')
                 return False
         return new_maze
 
+    # compare the fitness function between the new maze and the current maze
+    # using this function for simulated annealing
     def comparator(self, alg, param, maze):
         params_new = maze.solve(alg)
         params_cur = self.cur_maze.solve(alg)
@@ -165,23 +124,22 @@ class LocalSearch(object):
             return len(params_new.path) - len(params_cur.path)
         return False
 
-    def simulated_annealing(self, alg):
+    # simulated annealing
+    def simulated_annealing(self, alg, condition_param):
         while self.sa_tem > self.sa_tmin:
             new_maze = self.gen_maze(self.cur_maze.solve(alg).path)
             if not new_maze.solve(alg).has_path:
                 continue
             p = random.random()
-            comparator = self.comparator(alg, "max_fringe_size", new_maze)
+            comparator = self.comparator(alg, condition_param, new_maze)
             # e^700+ will be out of stack
             p_sa = 1 / (1 + math.exp(0 - comparator / self.sa_tem)) if (0 - comparator / self.sa_tem) < 500 else 0
             if comparator > 0 or p < p_sa:
                 self.update_maze_param(new_maze)
-                print('comparator =', comparator)
-                print(self.get_search_condition(alg, "max_fringe_size", self.cur_maze.solve(alg)))
-                print(len(self.cur_maze.solve(alg).path))
             self.sa_tem = self.sa_tem * self.sa_delta
-            # print('t =', self.sa_tem)
 
+    # choose the fitness function property
+    # three properties: max_fringe_size, total_nodes_expanded, and total_path_length
     def get_search_condition(self, param_name, solution_param):
         if param_name == "max_fringe_size":
             return solution_param.max_fringe_size
@@ -191,59 +149,67 @@ class LocalSearch(object):
             return len(solution_param.path)
         return False
 
-    def gen_ini_maze_bs(self, alg, m):
+    # generate m initial mazes for beam search
+    def gen_ini_maze_bs(self, alg, condition_param):
         ini_maze_list = queue.PriorityQueue()
         index = 0
-        for i in range(0, m):
+        for i in range(0, self.members):
             maze = Maze(self.ori_maze.occ_rate, self.ori_maze.dim)
             solution_param = maze.solve(alg)
             while solution_param.has_path == False:
                 maze = Maze(self.ori_maze.occ_rate, self.ori_maze.dim)
                 solution_param = maze.solve(alg)
-            ini_maze_list.put((-self.get_search_condition(alg, "total_nodes_expanded", solution_param), index, maze))
+            ini_maze_list.put((-self.get_search_condition(condition_param, solution_param), index, maze))
             index += 1
         print("ini_finished")
         return (ini_maze_list, index)
 
-    def beam_search(self, alg, m, k):
-        cur_maze_list, index = self.gen_ini_maze_bs(alg, m)
+    # beam search function
+    # m members simultaneously search and each members search k candidates, then from m * k candidates choose m new members
+    def beam_search(self, alg, condition_param):
+        cur_maze_list, index = self.gen_ini_maze_bs(alg, condition_param)
         hard_maze_list = queue.PriorityQueue()
         new_maze_list = queue.PriorityQueue()
         beam_search_iter = 0
         while not cur_maze_list.empty():
             beam_search_iter += 1
-            if beam_search_iter == 200:
+            # maximal iteration times
+            if beam_search_iter == 500:
                 break
-            print("_________________________beam_search+" + str(beam_search_iter))
-            for i in range(0, m):
+            # each members search k candidates
+            for i in range(0, self.members):
                 if cur_maze_list.empty():
                     break
                 temp_maze_list = queue.PriorityQueue()
                 cur_max_condition, cur_index, cur_maze = cur_maze_list.get()
                 print("cur_best_size: " + str(cur_max_condition))
-                for j in range(0, k):
-                    new_maze = self.gen_maze4(cur_maze, beam_search_iter)
+                for j in range(0, self.k_best):
+                    new_maze = self.gen_maze_bs(alg, cur_maze, beam_search_iter)
                     if new_maze:
                         new_path_param = new_maze.solve(alg)
-                        if self.get_search_condition(alg, "total_nodes_expanded", new_path_param) <= -cur_max_condition:
+                        # new maze is better than current maze
+                        if self.get_search_condition(alg, condition_param, new_path_param) <= -cur_max_condition:
                             continue
                         temp_maze_list.put((-self.get_search_condition(alg, new_path_param), index, new_maze))
                         index += 1
+                    # cannot generate solvable maze from current maze
+                    # that means current maze is local best
                     else:
                         hard_maze_list.put((cur_max_condition, cur_index, cur_maze))
-                        print("nochild: " + str(cur_max_condition))
                         break
+                # no better child, also means local best
                 if temp_maze_list.empty():
-                    print("localbest: " + str(cur_max_condition))
                     hard_maze_list.put((cur_max_condition, cur_index, cur_maze))
+                # prepare for next iteration
                 else:
-                    for len_queue in range(0, k):
+                    for len_queue in range(0, self.k_best):
                         if temp_maze_list.empty():
                             break
                         a = temp_maze_list.get()
                         print(a[0])
                         new_maze_list.put(a)
-            for len_queue in range(0, m):
+            # choose m new members to search
+            for len_queue in range(0, self.members):
                 if new_maze_list.empty():
                     break
                 cur_maze_list.put(new_maze_list.get())
@@ -275,9 +241,12 @@ class LocalSearch(object):
                 return params_m.max_fringe_size
             elif alg == 'a*':
                 params_m = m.solve(alg)
-                return params_m.nodes_expanded
+                return len(params_m.nodes_expanded)
+            elif alg == 'bfs':
+                params_m = m.solve(alg)
+                return len(params_m.path)
             else:
-                print("Only support dfs and a*")
+                print("Only support bfs, dfs and a*")
 
     def Maze_merge(self, m1, m2, d, strategy):
         """
@@ -375,11 +344,21 @@ class LocalSearch(object):
 
 
 if __name__ == "__main__":
-    ori_maze = Maze(0.1, 30)
-    sa = LocalSearch(ori_maze)
+    ori_maze = Maze(0.2, 50)
+    hm = LocalSearch(ori_maze)
 
-    max_fringe_size, i, maze1 = sa.beam_search("a*", 10, 30)
-    path = maze1.solve("a*").path
-    print(max_fringe_size)
-    printGraph(maze1, path)
+    # beam search
+    max_fringe_size, i, maze_bs = hm.beam_search("a*", "total_nodes_expanded")
+    solution_param = maze_bs.solve("a*")
+    printGraph(maze_bs, solution_param.path, "a*", (solution_param.max_fringe_size, solution_param.nodes_expanded))
+
+    # genetic algorithm
+    maze_gene = hm.genetic_algorithm('dfs')
+    solution_param = maze_gene.solve('dfs')
+    printGraph(maze_gene, solution_param.path, "dfs", (solution_param.max_fringe_size, solution_param.nodes_expanded))
+
+    # simulated annealing
+    hm.simulated_annealing("bfs", "total_path_length")
+    solution_param = hm.cur_maze.solve('bfs')
+    printGraph(hm.cur_maze, solution_param.path, "bfs", (solution_param.max_fringe_size, solution_param.nodes_expanded))
 
