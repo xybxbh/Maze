@@ -174,7 +174,7 @@ class LocalSearch(object):
         while not cur_maze_list.empty():
             beam_search_iter += 1
             # maximal iteration times
-            if beam_search_iter == 500:
+            if beam_search_iter == 100:
                 break
             # each members search k candidates
             for i in range(0, self.members):
@@ -188,9 +188,9 @@ class LocalSearch(object):
                     if new_maze:
                         new_path_param = new_maze.solve(alg)
                         # new maze is better than current maze
-                        if self.get_search_condition(alg, condition_param, new_path_param) <= -cur_max_condition:
+                        if self.get_search_condition(condition_param, new_path_param) <= -cur_max_condition:
                             continue
-                        temp_maze_list.put((-self.get_search_condition(alg, new_path_param), index, new_maze))
+                        temp_maze_list.put((-self.get_search_condition(condition_param, new_path_param), index, new_maze))
                         index += 1
                     # cannot generate solvable maze from current maze
                     # that means current maze is local best
@@ -344,13 +344,13 @@ class LocalSearch(object):
 
 
 if __name__ == "__main__":
-    ori_maze = Maze(0.2, 50)
+    ori_maze = Maze(0.3, 50)
     hm = LocalSearch(ori_maze)
 
     # beam search
-    max_fringe_size, i, maze_bs = hm.beam_search("a*", "total_nodes_expanded")
-    solution_param = maze_bs.solve("a*")
-    printGraph(maze_bs, solution_param.path, "a*", (solution_param.max_fringe_size, solution_param.nodes_expanded))
+    max_fringe_size, i, maze_bs = hm.beam_search("bfs", "total_path_length")
+    solution_param = maze_bs.solve("bfs")
+    printGraph(maze_bs, solution_param.path, "bfs", (solution_param.max_fringe_size, solution_param.nodes_expanded))
 
     # genetic algorithm
     maze_gene = hm.genetic_algorithm('dfs')
